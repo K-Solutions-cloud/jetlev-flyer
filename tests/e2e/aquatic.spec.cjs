@@ -16,7 +16,7 @@ test('boost HUD and aquatic stages render together without runtime errors',async
    for(let i=0;i<100;i++)updateWater(1/120);
    obstacles=[{type:lava?'piranha':'shark',x:W*.73,y:150,stage:'fire',progress:.52,lava},{type:lava?'piranha':'shark',x:W*.72,y:312,stage:'splash',progress:.3,lava},{type:'laser',x:W*.5,y:148,active:true,small:lava},{type:'rocket',x:W*.75,y:80}];
    updateHud();render();
-  };globalThis.bonusDemo=(sky=false)=>{start();p.y=145;obstacles=[];pickups=[];obstacleTimer=coinTimer=powerTimer=billTimer=fishTimer=100;const roll=JetlevBonus.roll;JetlevBonus.roll=()=>sky?{heaven:true}:{kind:'boost',amount:5};startBillEvent();JetlevBonus.roll=roll;};globalThis.bonusProbe=()=>({state,dist,boost:p.boost,coins,skyTime:heavenSession?.time});globalThis.endSky=()=>{heavenSession.earned=35;heavenSession.time=.01;heavenSession.bills=[];heavenSession.spawnTimer=100;};resize();requestAnimationFrame(frame);`);
+  };globalThis.bonusDemo=(sky=false)=>{start();p.y=145;obstacles=[];pickups=[];obstacleTimer=coinTimer=powerTimer=billTimer=fishTimer=100;const roll=JetlevBonus.roll;JetlevBonus.roll=()=>sky?{heaven:true}:{kind:'boost',amount:5};startBillEvent();JetlevBonus.roll=roll;};globalThis.bonusProbe=()=>({state,dist,boost:p.boost,coins,skyTime:heavenSession?.time,audioState:audio?.state,jetVolume:jetGain?.gain.value});globalThis.endSky=()=>{heavenSession.earned=35;heavenSession.time=.01;heavenSession.bills=[];heavenSession.spawnTimer=100;};resize();requestAnimationFrame(frame);`);
   await page.route('**/'+name+'.js',route=>route.fulfill({body:source,contentType:'text/javascript'}));
  }
  await page.route('**/jetlev-flyer/scene.html',route=>route.fulfill({body:raw,contentType:'text/html'}));
@@ -28,14 +28,20 @@ test('boost HUD and aquatic stages render together without runtime errors',async
  const frozen=await page.evaluate(()=>bonusProbe().dist);await page.waitForTimeout(150);expect(await page.evaluate(()=>bonusProbe().dist)).toBe(frozen);
  await page.screenshot({path:'/tmp/jetlev-scratch.png'});
  const first=page.locator('.bonus-tile').first(),box=await first.boundingBox();
- await page.mouse.move(box.x+5,box.y+box.height*.45);await page.mouse.down();await page.mouse.move(box.x+box.width-5,box.y+box.height*.45,{steps:12});await page.mouse.up();
+ await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+ await expect.poll(()=>page.evaluate(()=>bonusProbe().audioState)).toBe('suspended');
+ await page.mouse.move(box.x+5,box.y+box.height*.45);await page.mouse.down();
+ await first.locator('canvas').dispatchEvent('pointerup',{pointerId:999,pointerType:'touch'});
+ await page.mouse.move(box.x+box.width-5,box.y+box.height*.45,{steps:12});await page.mouse.up();
  await expect(first).toHaveClass(/revealed/);
+ await expect.poll(()=>page.evaluate(()=>bonusProbe().audioState)).toBe('running');
  for(let i=1;i<9;i++){if(await page.locator('.bonus-continue').isEnabled())break;await page.locator('.bonus-tile').nth(i).focus();await page.keyboard.press('Enter');}
  await expect(page.locator('.bonus-continue')).toBeEnabled();expect(await page.evaluate(()=>bonusProbe().boost)).toBe(5);
  await page.locator('.bonus-continue').click();await expect(page.locator('#boost-card')).toBeVisible();
  await page.evaluate(()=>bonusDemo(true));await page.waitForFunction(()=>bonusProbe().state==='heaven');await page.waitForTimeout(600);
  await page.screenshot({path:'/tmp/jetlev-heaven.png'});
  await page.locator('#pause').click();const remaining=await page.evaluate(()=>bonusProbe().skyTime);await page.waitForTimeout(150);expect(await page.evaluate(()=>bonusProbe().skyTime)).toBe(remaining);
- await page.locator('#resume').click();await page.evaluate(()=>endSky());await page.waitForFunction(()=>bonusProbe().state==='return-ready');expect(await page.evaluate(()=>bonusProbe().coins)).toBe(35);await page.keyboard.press('Space');expect(await page.evaluate(()=>bonusProbe().state)).toBe('playing');
+ await page.locator('#resume').click();await page.evaluate(()=>endSky());await page.waitForFunction(()=>bonusProbe().state==='return-ready');expect(await page.evaluate(()=>bonusProbe().coins)).toBe(35);
+ await expect.poll(()=>page.evaluate(()=>bonusProbe().jetVolume)).toBeLessThan(.0001);await page.keyboard.press('Space');expect(await page.evaluate(()=>bonusProbe().state)).toBe('playing');
  expect(errors).toEqual([]);
 });

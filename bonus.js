@@ -56,7 +56,7 @@
         }
         canvas.onpointerdown=event=>{if(pointer!==null)return;event.preventDefault();pointer=event.pointerId;last=null;canvas.setPointerCapture(pointer);scratch(event);};
         canvas.onpointermove=event=>{if(event.pointerId===pointer){event.preventDefault();scratch(event);}};
-        canvas.onpointerup=canvas.onpointercancel=()=>{pointer=null;last=null;};
+        canvas.onpointerup=canvas.onpointercancel=canvas.onlostpointercapture=event=>{if(event.pointerId===pointer){pointer=null;last=null;}};
         button.onclick=event=>{if(event.detail===0)reveal();};
       }
       overlay.classList.remove('bonus-won');grid.querySelector('button').focus();

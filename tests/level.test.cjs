@@ -100,3 +100,41 @@ assert.equal(level.plan({pilot:{x:40,y:150,vy:0},distance:0,coins:[{x:90,y:150}]
 console.log(`PASS: ${groups} multi-hazard encounters, ${triples} triples, all families replayed with reaction time and complete hazard horizon.`);
 
 assert.equal(level.plan({pilot:{x:40,y:150,vy:0},distance:0,coins:[],obstacles:[{type:'gate',x:9000,y:155,len:320}]}),null,'never accept a truncated planning horizon');
+
+// Cached forecast geometry must preserve the original search and its exact witness.
+const source = require('node:fs').readFileSync(require.resolve('../level.js'), 'utf8');
+assert.ok(source.includes('if (!frameSafe(node.y, j))'), 'exercise the cached planner');
+const referenceScope = {JetlevFlight: globalThis.JetlevFlight};
+new Function('globalThis', source.replace('if (!frameSafe(node.y, j))',
+  'if (!safe(node.y, scroll, pilot.x, obstacles))'))(referenceScope);
+let compared = 0, replayed = 0;
+for (let scenario = 0; scenario < 36; scenario++) {
+  const width = [160, 260, 480][scenario % 3], distance = 2400;
+  const pilot = {x: width * .27, y: 75 + random() * 155, vy: -30 + random() * 60,
+    boost: scenario % 2 ? 3 : 0, charge: scenario % 3 ? 0 : 1.1};
+  const speed = level.speedAt(distance), warn = speed * .9, duration = speed * 2.1;
+  const height = 95 + random() * 135, fire = warn + duration * .5;
+  const x = pilot.x + .4 * (warn + duration * .8);
+  const obstacles = [
+    {type: scenario % 2 ? 'shark' : 'piranha', x, y: 312, height, warn, duration, travel: 0},
+    {type: 'laser', x: x - .4 * fire - 12 + 2.4 * fire, y: 301 - height,
+      activation: fire, expires: fire + speed * 1.2, travel: 0},
+    {type: scenario % 3 ? 'drone' : 'meteor', x: width + 80, y: 70, baseY: 70, fall: .6}
+  ];
+  if (scenario % 4 === 0) obstacles.push({type: 'gate', x: width + 240, y: 195, len: 43 + random() * 20});
+  const coins = scenario % 3 ? [] : Array.from({length: 6}, (_, i) => ({x: width + 24 + i * 17, y: 80}));
+  const input = {pilot, distance, obstacles, coins, reactionTime: .35, held: scenario % 2 === 0};
+  const path = level.plan(input);
+  assert.deepEqual(path, referenceScope.JetlevLevel.plan(input), 'cache preserves rejection and every witness input/position');
+  compared++;
+  if (!path) continue;
+  const actual = {...pilot};
+  for (const point of path) {
+    level.fly(actual, point.thrust);
+    assert.equal(actual.y, point.y);
+    assert.ok(level.safe(actual.y, point.x - pilot.x, pilot.x, obstacles), 'cached witness clears uncached collision check');
+  }
+  replayed++;
+}
+assert.ok(replayed >= 5, 'differential cases include accepted witnesses');
+console.log(`PASS: ${compared} cached/uncached planner comparisons, ${replayed} identical witnesses replayed.`);

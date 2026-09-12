@@ -88,6 +88,18 @@
     const targets = coins.filter(c => c.x > pilot.x + 3).sort((a, b) => a.x - b.x);
     const end = Math.max(endScroll || 0, ...targets.map(c => c.x - pilot.x + 28), ...obstacles.map(o => horizon(o,pilot.x)), 30);
     const frames = forecast(distance, end);
+    // Hazard poses depend on forecast time, not the candidate flight path.
+    const checks = [];
+    function frameSafe(y, frame) {
+      if (y >= WATER_Y - 5) return false;
+      const bands = checks[frame] ??= obstacles.flatMap(o => {
+        const at = pose(o, frames[frame]), box = bounds(o);
+        if (!at.active || Math.abs(at.x - pilot.x) >= box.x + 15) return [];
+        const radius = box.y + 20 + (o.type === 'drone' ? 13 : 0) + 5;
+        return [[at.y, radius]];
+      });
+      return bands.every(([center, radius]) => Math.abs(center - y) >= radius);
+    }
     if (!frames.length || frames[frames.length - 1] < end) return null;
     let beam = [{ ...pilot, next: 0, parent: null, path: [] }];
     const branchSteps = 18; // At most one input change per 150 ms.
@@ -101,7 +113,7 @@
           const input = j * STEP < reactionTime ? held : thrust;
           fly(node, input);
           const scroll = frames[j];
-          if (!safe(node.y, scroll, pilot.x, obstacles)) { valid = false; break; }
+          if (!frameSafe(node.y, j)) { valid = false; break; }
           while (node.next < targets.length && targets[node.next].x - pilot.x <= scroll) {
             if (Math.abs(node.y - 2 - targets[node.next].y) > 8) { valid = false; break; }
             node.next++;
