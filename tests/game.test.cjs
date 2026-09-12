@@ -1,13 +1,15 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
 const elements={},events={};let frame;
-const ctx=new Proxy({}, {get:(o,k)=>o[k]||(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
-const element=id=>elements[id] ||= {hidden:['hud','result','pause-screen','toast','event-badge'].includes(id),innerHTML:'',textContent:'',style:{},classList:{toggle(){},remove(){},add(){}},setAttribute(){},focus(){},addEventListener(k,f){this[k]=f},setPointerCapture(){}};
+const gradient={addColorStop(){}};
+const ctx=new Proxy({}, {get:(o,k)=>o[k]||(k==='createRadialGradient'?()=>gradient:()=>{}),set:(o,k,v)=>(o[k]=v,true)});
+const element=id=>elements[id] ||= {hidden:['hud','result','pause-screen','toast','event-badge'].includes(id),innerHTML:'',textContent:'',style:{setProperty(){}},classList:{toggle(){},remove(){},add(){}},setAttribute(){},focus(){},addEventListener(k,f){this[k]=f},setPointerCapture(){}};
 Object.assign(element('game'),{getContext:()=>ctx,getBoundingClientRect:()=>({width:390,height:782})});
 const sandbox={console,Math,Number,devicePixelRatio:1,localStorage:{getItem:()=>null,setItem(){}},ResizeObserver:class{observe(){}},document:{getElementById:element,createElement:()=>({getContext:()=>ctx}),addEventListener(){}},window:{matchMedia:()=>({matches:false}),addEventListener:(k,f)=>events[k]=f},requestAnimationFrame:f=>frame=f};
 for(const path of ['level.js','effects.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
 let source=fs.readFileSync('game.js','utf8');
 // Test instrumentation stays outside the shipped game.
-source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held}),set:(fn)=>eval(fn),update,collectPower,makePattern,hit};resize();requestAnimationFrame(frame);`);
+source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,hit};resize();requestAnimationFrame(frame);`);
+sandbox.soundEvents=[];source=source.replace('function sfx(kind){','function sfx(kind){globalThis.soundEvents.push(kind);');
 vm.runInNewContext(source,sandbox);const test=sandbox.test;
 let now=0;const tick=n=>{for(let i=0;i<n;i++)frame(now+=1000/60)};
 const reset=()=>{elements.start.onclick();test.set('obstacleTimer=100;coinTimer=100;powerTimer=100;');};
@@ -36,4 +38,11 @@ touch(1);touch(2);events.pointerup({pointerId:2});assert.equal(test.get().held,t
 elements.cabinet.lostpointercapture({pointerId:1});assert.equal(test.get().held,false,'lost capture releases thrust');
 touch(3);events.pagehide();assert.equal(test.get().held,false);assert.equal(test.get().state,'paused','app switch pauses and clears input');
 elements.resume.onclick();assert.equal(test.get().held,false,'resume never retains old touches');
+
+reset();test.set('flow=6;');sandbox.soundEvents.length=0;
+for(let i=0;i<5;i++){test.set('pickups=[{x:p.x,y:p.y-2,phase:0}];');test.update(1/120);}
+assert.equal(sandbox.soundEvents.filter(e=>e==='streak').length,1,'dedicated fifth-coin sound also during FLOW');
+assert.equal(test.get().toastRank,2);assert.ok(test.get().rewardRings.some(r=>r.strength>1));
+pickup('magnet');assert.ok(test.get().toastQueue.some(e=>e.text==='MAGNET!'&&e.rank===3),'important rewards are queued');
+tick(15);assert.ok(test.get().magnetVisual>.5,'magnet aura eases in');test.set('magnet=0;');tick(45);assert.ok(test.get().magnetVisual<.01,'magnet aura eases out');
 console.log('PASS: touch flight, shield hit/grace, magnet, FLOW cap, paused timers, perfect/missed lines, safe Gold Run, explosion, restart, rocket lead-in/direction.');
