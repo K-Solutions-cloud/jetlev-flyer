@@ -171,3 +171,14 @@ body{overscroll-behavior:none}
 .effect-dock .flow-meter.active #flow-label{display:flex;align-items:center;gap:4px}
 .effect-dock .flow-meter.active #flow-label::before{content:"×2";font:800 12px/1 var(--arcade);color:var(--effect-color);letter-spacing:0}
 @media(orientation:landscape) and (max-height:600px){.hud .combo{bottom:5px;right:0}}
+
+/* Edge-to-edge game, with brand and audio controls integrated into the home page. */
+.arcade{width:min(100%,960px)}
+.cabinet{height:100svh;height:100dvh;min-height:0;border:0;border-radius:0;box-shadow:none}
+.home{padding-top:max(18px,env(safe-area-inset-top))}
+.home-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;margin-bottom:16px}
+.home-heading h1{margin:0;min-width:0;line-height:0;flex:1;text-shadow:none}
+.home-logo{display:block;width:100%;max-width:340px;height:auto;border-radius:4px}
+.home-heading .square{width:44px;height:44px;font-size:25px;border:1px solid #ffffff30;background:#082d38;box-shadow:none;border-radius:10px}
+.hud{top:max(16px,env(safe-area-inset-top))}
+@media(orientation:landscape) and (max-height:600px){.home-heading{gap:12px;margin:0}.home-heading h1{margin:0}.home-logo{max-width:270px}}

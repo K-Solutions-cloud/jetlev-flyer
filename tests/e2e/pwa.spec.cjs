@@ -23,6 +23,15 @@ test('installable, self-contained and playable offline under repository path',as
  expect(manifest.start_url).toBe('./');expect(manifest.orientation).toBe('portrait-primary');
  await context.setOffline(true);await page.reload();await page.locator('#start').tap();
  await expect(page.locator('#hud')).toBeVisible();
+ const voices=await page.evaluate(async()=>{
+  const audio=new AudioContext(),durations=[];
+  for(const name of ['nice','whoa','awesome']){
+   const response=await fetch('assets/audio/'+name+'.mp3');
+   durations.push((await audio.decodeAudioData(await response.arrayBuffer())).duration);
+  }
+  await audio.close();return durations;
+ });
+ expect(voices.every(duration=>duration>.3&&duration<2.5)).toBe(true);
  await page.locator('#pause').tap();await expect(page.locator('#pause-screen')).toBeVisible();
  await page.locator('#quit').tap();await page.locator('#restart').tap();
  await expect(page.locator('#hud')).toBeVisible();

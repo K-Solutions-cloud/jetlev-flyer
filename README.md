@@ -86,4 +86,4 @@ Android: im Browser die Installation anbieten lassen bzw. „App installieren“
 
 Das Manifest und sämtliche URLs unterstützen den Repository-Unterpfad `/jetlev-flyer/`. Die PWA ist für Hochformat und Standalone-Anzeige konfiguriert. Schriftlizenzen liegen unter `assets/fonts/*-OFL.txt`.
 
-Sprachclip „Perfect“: [hansolo / OpenGameArt](https://opengameart.org/node/16125), CC BY 3.0. Aufnahme unverändert; Attribution liegt auch offline unter `assets/audio/CREDITS.txt`.
+Streak-Stimmen: „Announcer Pack – El Dude“, VoiceBosch / SoundBiterSFX, [Freesound](https://freesound.org/people/SoundBiterSFX/sounds/730462/), CC BY 4.0. Drei gekürzte, normalisierte Ausrufe; Offline-Attribution unter `assets/audio/CREDITS.txt`. Stimmen bei 15/30/50 Münzen und danach alle 50 ab 100, höchstens einmal je Meilenstein und Run, mindestens zehn Sekunden Abstand.

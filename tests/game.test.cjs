@@ -121,17 +121,20 @@ reset();test.set('p.y=240;p.vy=88;held=true;');for(let i=0;i<40;i++)test.update(
 assert.ok(test.get().p.y<240);
 console.log('PASS: flight, effects, career, eruption/meteors, fatal water contact and active recovery.');
 
-// Spoken reward follows the visible toast, and cannot survive mute/pause or overlap.
+// Callouts are reserved for rare milestones; perfect rows and five-streaks stay instrumental.
 sandbox.voiceStarts=0;sandbox.voiceStops=0;
-test.set(`sound=true;state='playing';perfectBuffer={duration:.8};
+test.set(`sound=true;state='playing';startAge=20;voiceBuffers.nice=voiceBuffers.whoa=voiceBuffers.awesome={duration:.8};
  audio={destination:{},createBufferSource:()=>({connect(){},start(){globalThis.voiceStarts++;},stop(){globalThis.voiceStops++;}}),createGain:()=>({gain:{},connect(){}})};
- toastLife=0;showToast('PERFEKT +5',1.05,3);`);
-assert.equal(sandbox.voiceStarts,1);
-test.set("showToast('PERFEKT +5',1.05,3);");
-assert.equal(sandbox.voiceStarts,1,'queued rewards must not speak early');
-test.set("toastLife=0;showToast('PERFEKT +5',1.05,3);");
-assert.equal(sandbox.voiceStarts,2);assert.equal(sandbox.voiceStops,1,'new voice replaces the previous voice');
+ toastLife=0;showToast('PERFEKT +5',1.05,3);toastLife=0;showToast('5 STREAK!',1,2);`);
+assert.equal(sandbox.voiceStarts,0);
+test.set("toastLife=0;showToast('15 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,1);
+test.set("toastLife=0;showToast('30 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,1,'never overlap voices');
+test.set('stopVoice();startAge=25;');
+test.set("toastLife=0;showToast('30 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,1,'ten-second cooldown');
+test.set("startAge=40;toastLife=0;showToast('15 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,1,'same milestone only once per run');
+test.set("toastLife=0;showToast('30 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,2);
 test.set('pause();');assert.equal(sandbox.voiceStops,2,'pause stops speech');
-test.set("sound=false;state='playing';toastLife=0;showToast('PERFEKT +5',1.05,3);");
-assert.equal(sandbox.voiceStarts,2,'mute suppresses speech');
-console.log('PASS: Perfect voice follows toast visibility, replaces overlap, and respects pause/mute.');
+test.set("sound=false;state='playing';startAge=60;toastLife=0;showToast('50 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,2,'mute suppresses speech');
+test.set("sound=true;toastLife=1;toastRank=3;showToast('50 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,2,'queued reward waits for display');
+test.set("toastLife=0;showToast('50 STREAK!',1.4,3);");assert.equal(sandbox.voiceStarts,3);
+console.log('PASS: rare streak voices, cooldown, once-per-run milestones, queued toast, pause and mute.');

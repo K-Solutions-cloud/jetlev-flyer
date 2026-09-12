@@ -11,9 +11,9 @@ function mount({getProfile,onSelectIsland,onBuy,onEquip,definitions,renderPrevie
  const launcher=document.createElement('div');launcher.className='career-launcher';
  launcher.setAttribute('aria-label','Hauptmenü');launcher.innerHTML=navigation('data-career');launcher.querySelector('[data-career=home]').setAttribute('aria-current','page');
  document.getElementById('intro').append(launcher);
- const dialog=document.createElement('dialog');dialog.className='career-dialog';dialog.setAttribute('aria-labelledby','career-title');
- dialog.innerHTML=`<header class="career-header"><button class="career-close" type="button" aria-label="Zurück zum Spiel">‹</button><div><span class="career-eyebrow">JETLEV · WATER RUSH</span><h2 id="career-title">DEINE INSELN</h2></div><strong class="career-wallet">${coin}<span></span></strong></header><div class="career-content"></div><p class="career-status" role="status" aria-live="polite"></p><nav class="career-tabs" aria-label="Hauptmenü">${navigation('data-tab')}</nav>`;
- document.body.append(dialog);
+ const page=document.createElement('section');page.className='career-page';page.hidden=true;page.setAttribute('aria-labelledby','career-title');
+ page.innerHTML=`<header class="career-header"><button class="career-close" type="button" aria-label="Zurück zum Spiel"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><div><span class="career-eyebrow">JETLEV-FLYER</span><h2 id="career-title">DEINE INSELN</h2></div><strong class="career-wallet">${coin}<span></span></strong></header><div class="career-content"></div><p class="career-status" role="status" aria-live="polite"></p><nav class="career-tabs" aria-label="Hauptmenü">${navigation('data-tab')}</nav>`;
+ document.getElementById('cabinet').append(page);
  const result=document.createElement('div');result.className='career-result';result.hidden=true;document.querySelector('#result .score-card').after(result);
  function missionValue(profile,island,mission){return Math.min(mission.target,Math.max(0,Number(profile.islands?.[island.id]?.[mission.metric])||0));}
  function unlocked(profile,island,index){if(definitions.isUnlocked)return definitions.isUnlocked(profile,island.id);return index===0||islands.slice(0,index).every(i=>i.missions.every(m=>missionValue(profile,i,m)>=m.target));}
@@ -25,10 +25,10 @@ function mount({getProfile,onSelectIsland,onBuy,onEquip,definitions,renderPrevie
   document.getElementById('home-mission-label').textContent=next?next.label:'INSELPASS KOMPLETT';
   document.getElementById('home-mission-value').textContent=next?`${missionValue(profile,selected,next)} / ${next.target}`:'✓';
   const progress=document.getElementById('home-mission-progress');progress.max=next?.target||1;progress.value=next?missionValue(profile,selected,next):1;
-  dialog.querySelector('.career-wallet span').textContent=profile.bank;
-  dialog.querySelector('#career-title').textContent=tab==='islands'?'DEINE INSELN':'DEIN LOOK';
-  dialog.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.tab===tab)));
-  const content=dialog.querySelector('.career-content'),focusKey=document.activeElement?.dataset?.focus;
+  page.querySelector('.career-wallet span').textContent=profile.bank;
+  page.querySelector('#career-title').textContent=tab==='islands'?'DEINE INSELN':'DEIN LOOK';
+  page.querySelectorAll('[data-tab]').forEach(button=>button.setAttribute('aria-current',button.dataset.tab===tab?'page':'false'));
+  const content=page.querySelector('.career-content'),focusKey=document.activeElement?.dataset?.focus;
   if(tab==='islands')content.innerHTML=`<p class="career-lead">3 MISSIONEN → NÄCHSTE INSEL<small>Jeder Run zählt.</small></p><div class="career-islands">${islands.map((island,index)=>{
    const open=unlocked(profile,island,index),active=profile.selectedIsland===island.id,done=island.missions.filter(m=>missionValue(profile,island,m)>=m.target).length;
    return `<article class="career-island ${active?'selected':''} ${open?'':'locked'}" style="--island-color:${esc(island.color)}">${islandArt(index)}<div class="career-island-heading"><div><span class="career-eyebrow">INSEL 0${index+1} · ${open?`${done}/3 ✓`:'GESPERRT'}</span><h3>${esc(island.name)}</h3></div><button type="button" data-island="${esc(island.id)}" data-focus="island-${esc(island.id)}" ${!open||active?'disabled':''}>${active?'AKTIV ✓':open?'WÄHLEN':'⌁'}</button></div>${open?`<div class="career-missions">${island.missions.map(m=>{const value=missionValue(profile,island,m);return `<div class="career-mission ${value>=m.target?'complete':''}"><div><span>${value>=m.target?'✓ ':''}${esc(m.label)}</span><b>${value}/${m.target}</b></div><progress value="${value}" max="${m.target}" aria-label="${esc(m.label)}"></progress></div>`;}).join('')}</div>`:`<p class="career-unlock">${esc(islands[index-1]?.name)} abschließen</p>`}</article>`;
@@ -40,21 +40,20 @@ function mount({getProfile,onSelectIsland,onBuy,onEquip,definitions,renderPrevie
   if(renderPreview)content.querySelectorAll('[data-kit-preview]').forEach(canvas=>renderPreview(canvas,cosmetics.find(kit=>kit.id===canvas.dataset.kitPreview)));
   if(focusKey)content.querySelector(`[data-focus="${CSS.escape(focusKey)}"]`)?.focus({preventScroll:true});
  }
- function close(){if(dialog.open)dialog.close();}
- function open(which,event){if(which==='home'){close();return;}tab=which;opener=event?.currentTarget||document.activeElement;refresh();dialog.querySelector('.career-status').textContent='';if(!dialog.open)dialog.showModal();dialog.querySelector('.career-content').scrollTop=0;dialog.querySelector('.career-close').focus();}
+ function close(){if(page.hidden)return;page.hidden=true;document.getElementById('game').inert=false;document.getElementById('cabinet').classList.remove('menu-browsing');document.getElementById('intro').hidden=false;opener?.focus({preventScroll:true});}
+ function open(which,event){if(which==='home'){close();return;}tab=which;opener=event?.currentTarget||document.activeElement;refresh();page.querySelector('.career-status').textContent='';document.getElementById('intro').hidden=true;page.hidden=false;document.getElementById('game').inert=true;document.getElementById('cabinet').classList.add('menu-browsing');page.querySelector('.career-content').scrollTop=0;page.querySelector('.career-close').focus();}
  launcher.querySelectorAll('button').forEach(button=>button.addEventListener('click',event=>open(button.dataset.career,event)));
  document.querySelectorAll('[data-open-islands]').forEach(button=>button.addEventListener('click',event=>open('islands',event)));
- dialog.querySelector('.career-close').addEventListener('click',close);
- dialog.addEventListener('close',()=>opener?.focus({preventScroll:true}));
- dialog.addEventListener('click',event=>{
-  if(event.target===dialog){const box=dialog.getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)close();return;}
+ page.querySelector('.career-close').addEventListener('click',close);
+ page.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();close();}});
+ page.addEventListener('click',event=>{
   const button=event.target.closest('button');if(!button||button.disabled)return;
-  if(button.dataset.tab){if(button.dataset.tab==='home'){close();return;}tab=button.dataset.tab;refresh();dialog.querySelector('.career-content').scrollTop=0;dialog.querySelector('.career-status').textContent='';}
-  if(button.dataset.island){onSelectIsland(button.dataset.island);refresh();dialog.querySelector('.career-status').textContent='INSEL GEWÄHLT · BEREIT ZUM ABHEBEN';}
-  if(button.dataset.buy){const before=getProfile().owned.includes(button.dataset.buy);onBuy(button.dataset.buy);refresh();dialog.querySelector('.career-status').textContent=!before&&getProfile().owned.includes(button.dataset.buy)?'DEIN NEUER LOOK ✓':'NICHT GENUG MÜNZEN';}
-  if(button.dataset.equip){onEquip(button.dataset.equip);refresh();dialog.querySelector('.career-status').textContent='LOOK AKTIV ✓';}
+  if(button.dataset.tab){if(button.dataset.tab==='home'){close();return;}tab=button.dataset.tab;refresh();page.querySelector('.career-content').scrollTop=0;page.querySelector('.career-status').textContent='';}
+  if(button.dataset.island){onSelectIsland(button.dataset.island);refresh();page.querySelector('.career-status').textContent='INSEL GEWÄHLT · BEREIT ZUM ABHEBEN';}
+  if(button.dataset.buy){const before=getProfile().owned.includes(button.dataset.buy);onBuy(button.dataset.buy);refresh();page.querySelector('.career-status').textContent=!before&&getProfile().owned.includes(button.dataset.buy)?'DEIN NEUER LOOK ✓':'NICHT GENUG MÜNZEN';}
+  if(button.dataset.equip){onEquip(button.dataset.equip);refresh();page.querySelector('.career-status').textContent='LOOK AKTIV ✓';}
  });
- ['pointerdown','pointerup','keydown','keyup'].forEach(type=>dialog.addEventListener(type,event=>event.stopPropagation()));
+ ['pointerdown','pointerup','keydown','keyup'].forEach(type=>page.addEventListener(type,event=>event.stopPropagation()));
  function showResults(summary={}){
   refresh();const earned=summary.earned??summary.coins??0,completed=summary.completedMissions?.length??0,unlockedCount=summary.unlockedIslands?.length??0;
   const profile=getProfile(),island=islands.find(i=>i.id===profile.selectedIsland)||islands[0],next=island.missions.filter(m=>missionValue(profile,island,m)<m.target).sort((a,b)=>missionValue(profile,island,b)/b.target-missionValue(profile,island,a)/a.target)[0];

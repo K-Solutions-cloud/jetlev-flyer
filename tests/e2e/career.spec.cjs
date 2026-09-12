@@ -9,7 +9,10 @@ test('island choice and purchased Jetlev kit persist across reload and offline s
  });
  await page.goto('./');await expect(page.locator('#start')).toBeEnabled();
  await page.locator('[data-career="garage"]').tap();
- await expect(page.locator('.career-dialog')).toBeVisible();
+ await expect(page.locator('.career-page')).toBeVisible();
+ await expect(page.locator('#intro')).toBeHidden();
+ expect(await page.locator('dialog:modal').count()).toBe(0);
+ await expect(page.locator('.app-header')).toHaveCount(0);
  await expect(page.locator('[data-buy="aqua"]')).toBeDisabled();
  await page.locator('[data-buy="coral"]').tap();
  await expect(page.locator('.career-wallet span')).toHaveText('20');
@@ -23,7 +26,7 @@ test('island choice and purchased Jetlev kit persist across reload and offline s
  await expect(page.locator('#home-island')).toContainText('PALMENHAFEN');
  await page.locator('[data-career="garage"]').tap();
  await expect(page.locator('[data-equip="coral"]')).toBeDisabled();
- expect(await page.locator('.career-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
+ expect(await page.locator('.career-page').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);
  await page.locator('.career-close').tap();
  await context.setOffline(true);await page.reload();await page.locator('#start').tap();
  await expect(page.locator('#hud')).toBeVisible();

@@ -1,6 +1,6 @@
-Perfect voice: hansolo — Fail and Success Voice
-Source: https://opengameart.org/node/16125
-File: perfect.mp3 (unmodified)
-License: Creative Commons Attribution 3.0 Unported
-https://creativecommons.org/licenses/by/3.0/
-Some assets are from OpenGameArt.org
+Streak voices: Announcer Pack - El Dude
+Voiced and produced by VoiceBosch (SoundBiter), published by SoundBiterSFX
+https://freesound.org/people/SoundBiterSFX/sounds/730462/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+Adaptations: excerpts (Dude, Nice! / Whoa! / Awesome!), silence trimmed, mono conversion and loudness normalization. No voice synthesis or cloning.
