@@ -233,7 +233,7 @@ function updateHud(){
  $('distance').innerHTML=String(Math.floor(dist)).padStart(4,'0')+'<small>m</small>';
  if($('coins').textContent!==String(coins)){pop('coin-counter');$('coins').textContent=coins;}
  const active=flow>0,flowEnding=effectExit.flow>0;
- const label=flowEnding?'MÜNZEN ×2 <strong><small>ENDE</small></strong>':active?'MÜNZEN ×2 <strong>'+Math.ceil(flow)+'<small>s</small></strong>':'<img class="coin-icon" src="assets/icons/coin.svg" alt="Münzen" width="20" height="20"> <b>'+charge+'/10</b> → ×2';
+ const label='<span class="effect-name">MÜNZEN ×2</span><strong>'+(flowEnding?'<small>ENDE</small>':active?Math.ceil(flow)+'<small>s</small>':charge+'<small>/10</small>')+'</strong>';
  if($('flow-label').innerHTML!==label)$('flow-label').innerHTML=label;
  $('flow-fill').style.width=(active?Math.min(100,flow/flowMax*100):charge*10)+'%';
  $('flow-meter').classList.toggle('active',active||flowEnding);$('flow-meter').classList.toggle('expired',flowEnding);
@@ -302,7 +302,10 @@ function updateEruption(dt){
  eruptionVisual+=(target-eruptionVisual)*(1-Math.exp(-dt*1.8));
  const banner=$('eruption-status');banner.hidden=eruptionWarning<=0&&eruption<=0&&!eruptionFinishing;
  const label=eruptionWarning>0?'AUSBRUCH IN '+Math.ceil(eruptionWarning):eruptionFinishing?'LETZTE BROCKEN':'VULKAN · '+Math.ceil(eruption)+'s';
- if(banner.textContent!==label)banner.textContent=label;
+ const time=eruptionWarning>0?Math.ceil(eruptionWarning):eruptionFinishing?'…':Math.ceil(eruption);
+ const content='<svg class="effect-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m2 21 7-12 3 3 3-3 7 12Z"/><path d="m8 3 2 3m6-3-2 3M12 1v4"/></svg><div class="effect-details"><span class="effect-name">'+(eruptionWarning>0?'AUSBRUCH':'VULKAN')+'</span><strong>'+time+(eruptionFinishing?'':'<small>s</small>')+'</strong></div>';
+ if(banner.innerHTML!==content)banner.innerHTML=content;
+ banner.setAttribute('aria-label',label);
 }
 function drawMeteorWarnings(){
  for(const o of obstacles){

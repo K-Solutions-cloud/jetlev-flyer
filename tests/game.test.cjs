@@ -110,7 +110,7 @@ test.set('gold=0;obstacles=[{type:"gate",x:p.x+50,y:90,len:40}];');test.updateEr
 assert.equal(test.get().eruptionWarning,0,'eruption waits for old hazards');
 test.set('obstacles=[];');test.updateEruption(.01);assert.ok(test.get().eruptionWarning>2);
 elements.pause.onclick();const warningTime=test.get().eruptionWarning;tick(30);assert.equal(test.get().eruptionWarning,warningTime,'paused warning freezes');elements.resume.onclick();
-test.updateEruption(2.5);assert.equal(test.get().eruption,12);assert.match(elements['eruption-status'].textContent,/VULKAN/);
+test.updateEruption(2.5);assert.equal(test.get().eruption,12);assert.match(elements['eruption-status'].innerHTML,/VULKAN/);
 test.makeMeteor();const meteor=test.get().obstacles.find(o=>o.type==='meteor');assert.ok(meteor,'fair meteor spawn is possible');
 const mx=meteor.x,my=meteor.y;test.update(1/120);assert.ok(meteor.x<mx&&meteor.y>my,'meteor travels diagonally down-left');
 const beforeLava=test.get().coins;test.set('eruption=.01;');test.updateEruption(.02);assert.equal(test.get().coins,beforeLava,'survival waits for last meteor');test.set('obstacles=[];');test.updateEruption(.02);assert.equal(test.get().coins,beforeLava+15);test.updateEruption(.02);assert.equal(test.get().coins,beforeLava+15,'survival bonus only once');

@@ -14,7 +14,7 @@ test('stale document switches to the active release before PLAY is enabled',asyn
 });
 test('installable, self-contained and playable offline under repository path',async({page,context})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- const external=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:4173/'))external.push(r.url());});
+ const external=[];page.on('request',r=>{if(!r.url().startsWith(`http://127.0.0.1:${process.env.JETLEV_TEST_PORT||4173}/`))external.push(r.url());});
  await page.goto('./');await page.evaluate(()=>navigator.serviceWorker.ready);
  await page.waitForFunction(()=>navigator.serviceWorker.controller!==null);
  const session=await context.newCDPSession(page);
