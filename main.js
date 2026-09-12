@@ -1,4 +1,7 @@
+import './flight.js';
 import './level.js';
+import './heaven.js';
+import './bonus.js';
 import './effects.js';
 import './music.js';
 import './water.js';

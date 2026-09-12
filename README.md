@@ -1,4 +1,4 @@
-# JETLEV-FLYER — Water Rush
+# Jetlev Paradise Glide
 
 Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundeffekten. HTML5 Canvas und Vanilla JavaScript, ohne Build-Schritt.
 
@@ -87,3 +87,9 @@ Android: im Browser die Installation anbieten lassen bzw. „App installieren“
 Das Manifest und sämtliche URLs unterstützen den Repository-Unterpfad `/jetlev-flyer/`. Die PWA ist für Hochformat und Standalone-Anzeige konfiguriert. Schriftlizenzen liegen unter `assets/fonts/*-OFL.txt`.
 
 Streak-Stimmen: „Announcer Pack – El Dude“, VoiceBosch / SoundBiterSFX, [Freesound](https://freesound.org/people/SoundBiterSFX/sounds/730462/), CC BY 4.0. Drei gekürzte, normalisierte Ausrufe; Offline-Attribution unter `assets/audio/CREDITS.txt`. Stimmen bei 15/30/50 Münzen und danach alle 50 ab 100, höchstens einmal je Meilenstein und Run, mindestens zehn Sekunden Abstand.
+
+## Paradise-Flug & Inselglück
+
+1,25 Sekunden Halten lädt **Turbo Flow**: fünf Sekunden schneller steigen, sinken und abbremsen. Loslassen und neu laden; kein Stapeln. Haie und Lava-Piranhas kündigen Sprung und Augenschuss an. Der gemeinsame Bewegungsplaner prüft Körper, Laser, Meteore, Münzen und den aktuellen Boost-Zustand zusammen.
+
+Grüne Scheine öffnen ein kostenloses Rubbel-Los (Schild, Magnet, Turbo, Gold Run oder Münzen). Drei gleiche Felder gewinnen. Genau 1 % der Schein-Rolls starten stattdessen einen 15-Sekunden-Himmelsflug mit fünf Münzen pro gesammeltem Schein. Die normale Runde friert ein und wartet nach dem Bonus auf einen neuen Flugdruck. Gold-Run-Gewinne starten erst nach bestehenden Gefahren beziehungsweise dem Lava-Event.

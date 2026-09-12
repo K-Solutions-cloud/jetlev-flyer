@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-require('../level.js');
+require('../flight.js');require('../level.js');
 const level = globalThis.JetlevLevel;
 let seed = 91231;
 const random = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);

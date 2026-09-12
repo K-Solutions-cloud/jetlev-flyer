@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-require('../level.js');
+require('../flight.js');require('../level.js');
 const { fly } = globalThis.JetlevLevel;
 
 // Pressing and releasing each reverse terminal motion in under 130 ms,

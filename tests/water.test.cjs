@@ -22,3 +22,24 @@ for(let i=0;i<400;i++)water.update(1/120,{nozzles:[]});assert.equal(water.getSta
 let saves=0;water.draw({save(){saves++;},restore(){saves--;},fillRect(){}});assert.equal(saves,0,'renderer restores canvas state');
 water.reset();assert.equal(water.getState().impacts,0);assert.equal(water.getState().emitted,0);
 console.log('PASS: jet easing, inherited momentum, gravity, surface contact, bounded particles, reduced motion and persistent rainbow stripes.');
+const boosted=make(),plain=make(),quietBoost=make(),charging=make();
+for(let i=0;i<1200;i++){
+ boosted.update(1/120,{...params,boost:5,rainbow:true});
+ plain.update(1/120,params);
+ quietBoost.update(1/120,{...params,boost:5,reducedMotion:true});
+ charging.update(1/120,{...params,charge:.95});
+}
+const boostState=boosted.getState(),plainState=plain.getState();
+assert.ok(boostState.jetSpeed>plainState.jetSpeed+50,'boost visibly accelerates water filaments');
+assert.ok(boostState.particles.some(p=>!p.foam&&p.width>plainState.particles[0].width),'boost thickens the jet');
+assert.ok(boostState.particles.some(p=>p.foam&&p.vy<0),'boost produces rising nozzle foam');
+assert.ok(charging.getState().particles.some(p=>p.foam),'nearly charged jet anticipates boost with bubbles');
+assert.ok(new Set(boostState.particles.filter(p=>!p.foam).map(p=>p.color)).size>=3,'boost preserves rainbow filaments');
+assert.ok(boostState.particles.length<=180&&boostState.ripples.length<=14);
+assert.ok(quietBoost.getState().particles.length<=72&&quietBoost.getState().emitted<boostState.emitted*.7,'boost respects reduced motion');
+assert.ok(Math.abs(quietBoost.getState().jetSpeed-boostState.jetSpeed)<.001);
+assert.ok(boostState.particles.every(p=>[p.x,p.y,p.vx,p.vy,p.age,p.width].every(Number.isFinite)));
+let boostRects=0;boosted.draw({save(){},restore(){},fillRect(){boostRects++;}});assert.ok(boostRects>0);
+for(let i=0;i<400;i++)boosted.update(1/120,{nozzles:[]});
+assert.equal(boosted.getState().particles.length,0,'boost foam and jets finish when emission stops');
+console.log('PASS: boosted jet speed/width, rising foam, charge anticipation, rainbow and reduced-motion budgets.');

@@ -7,15 +7,16 @@
   let particles=[],ripples=[],clock=0,carry=0,jetSpeed=100,emitted=0,impacts=0;
   const rand=(a,b)=>a+(b-a)*clamp(random(),0,1);
   function reset(){particles=[];ripples=[];clock=carry=emitted=impacts=0;jetSpeed=100;}
-  function update(dt,{nozzles=[],thrust=0,velocityY=0,color='#c9fbff',rainbow=false,surface=303,reducedMotion=false,widthScale=1}={}){
+  function update(dt,{nozzles=[],thrust=0,velocityY=0,color='#c9fbff',rainbow=false,surface=303,reducedMotion=false,widthScale=1,boost=0,charge=0}={}){
    dt=clamp(dt,0,.05);if(!dt)return;
-   clock+=dt;const amount=clamp(thrust,0,1),cap=reducedMotion?72:180;
-   jetSpeed+=(100+90*amount-jetSpeed)*(1-Math.exp(-dt*8));
+   clock+=dt;const amount=clamp(thrust,0,1),cap=reducedMotion?72:180,power=clamp(boost,0,1),anticipation=clamp((charge-.7)/.3,0,1);
+   jetSpeed+=(100+90*amount+75*power-jetSpeed)*(1-Math.exp(-dt*8));
    // Each parcel keeps the pilot's velocity at release, then follows its own arc.
    for(let i=particles.length-1;i>=0;i--){
     const p=particles[i];p.age+=dt;p.vx*=Math.exp(-dt*.3);
-    p.x+=p.vx*dt;p.y+=p.vy*dt+60*dt*dt;p.vy+=120*dt;
-    if(p.y>=surface||p.age>2.3){
+    const gravity=p.foam?-25:120;
+    p.x+=p.vx*dt;p.y+=p.vy*dt+gravity*.5*dt*dt;p.vy+=gravity*dt;
+    if(p.y>=surface||p.age>p.life){
      if(p.y>=surface){
       impacts++;
       const near=ripples.find(r=>r.age<.1&&Math.abs(r.x-p.x)<8);
@@ -33,14 +34,29 @@
      const nozzle=nozzles[index];if(!Number.isFinite(nozzle.x)||!Number.isFinite(nozzle.y))continue;
      if(particles.length>=cap)particles.shift();
      const tint=rainbow?spectrum[Math.floor(clock*4)%spectrum.length]:color;
-     particles.push({x:nozzle.x+rand(-.45,.45),y:nozzle.y,originY:nozzle.y,vx:(index===0?-1:1)*rand(1,5),vy:jetSpeed+clamp(velocityY,-120,120)*.65,age:0,life:2.3,color:tint,rainbow,width:(reducedMotion?2.5:rand(2,3.2))*clamp(widthScale,1,2),length:reducedMotion?11:rand(8,12)});
+     particles.push({x:nozzle.x+rand(-.45,.45),y:nozzle.y,originY:nozzle.y,vx:(index===0?-1:1)*rand(1,5),vy:jetSpeed+clamp(velocityY,-120,120)*.65,age:0,life:2.3,color:tint,rainbow,width:(reducedMotion?2.5:rand(2,3.2))*clamp(widthScale,1,2)*(1+power*.45),length:(reducedMotion?11:rand(8,12))*(1+power*.3)});
      emitted++;
+     const cadence=reducedMotion?8:4;
+     if((power||anticipation)&&emitted%cadence<2&&(power||emitted%(cadence*3)<2)){
+      if(particles.length>=cap)particles.shift();
+      // Foam shares the bounded parcel pool; alternating bubbles start at the
+      // nozzle or down the stream, leaving the pilot silhouette unobscured.
+      const down=power&&Math.floor(emitted/cadence)%2;
+      particles.push({x:nozzle.x+(index===0?-1:1)*rand(2,4),y:nozzle.y+(down?rand(10,25):-2),vx:(index===0?-1:1)*rand(4,12),vy:down?jetSpeed*.25:rand(-18,-8),age:0,life:reducedMotion?.22:rand(.28,.48),foam:true,color:emitted%3?'#f1fffa':'#91f9da',width:power?rand(1.4,2.2):1});
+     }
     }
    }
   }
   function draw(g){
    g.save();
    for(const p of particles){
+    if(p.foam){
+     const q=p.age/p.life,size=Math.max(1,Math.round(p.width*(1+q*.5))),x=Math.round(p.x),y=Math.round(p.y);
+     g.globalAlpha=(1-q)*.85;g.fillStyle=p.color;
+     if(q<.65){g.fillRect(x,y,size,1);g.fillRect(x-1,y+1,1,size);g.fillRect(x+size,y+1,1,size);g.fillRect(x,y+size+1,size,1);}
+     else{const spread=Math.round(q*3);g.fillRect(x-spread,y,1,1);g.fillRect(x+spread,y-1,1,1);}
+     continue;
+    }
     const fade=Math.min(1,(p.life-p.age)*2),length=Math.max(1,Math.min(18,p.length+p.age*4,p.y-p.originY+1));
     // Adjacent parcels overlap into a continuous flexible filament; the bright
     // narrow center makes thrust readable even against pale clouds.

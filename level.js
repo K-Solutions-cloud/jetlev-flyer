@@ -1,27 +1,31 @@
 /* Shared flight physics and conservative, witness-based level generation. */
 (() => {
   'use strict';
-  const STEP = 1 / 120;
-  const WATER_Y = 277; // Pilot's feet reach the surface at world y=303.
-  const DECAY_UP = Math.exp(-STEP * 8.2), DECAY_DOWN = Math.exp(-STEP * 7);
+  const {STEP,WATER_Y,fly}=globalThis.JetlevFlight;
   const speedAt = distance => 100 + Math.min(65, distance * .065);
 
-  function fly(pilot, thrust, dt = STEP) {
-    // Velocity stays continuous on press/release. A short, symmetric response
-    // makes reversals precise without snapping the pilot to a new velocity.
-    // Ease only near the ceiling. The lower surface never supports the pilot.
-    const target = thrust ? -Math.min(100,Math.max(0,pilot.y-37)*5) : 88;
-    const response = thrust ? 8.2 : 7;
-    const decay = dt === STEP ? (thrust ? DECAY_UP : DECAY_DOWN) : Math.exp(-dt * response);
-    const previous = pilot.vy;
-    pilot.vy = target + (previous - target) * decay;
-    // Analytic integration avoids refresh-rate-dependent displacement.
-    pilot.y += target * dt + (previous - target) * (1 - decay) / response;
-    if (pilot.y < 37) { pilot.y = 37; pilot.vy = Math.max(0, pilot.vy); }
-    return pilot;
+  const aquatic=o=>o.type==='shark'||o.type==='piranha';
+  const rate=o=>aquatic(o)?.4:o.type==='laser'?2.4:o.type==='rocket'?1.45:1;
+  function pose(o,scroll=0){
+    const travel=(o.travel||0)+scroll,x=o.x-scroll*rate(o);
+    if(aquatic(o)){
+      const progress=(travel-o.warn)/o.duration;
+      const stage=progress<0?'warning':progress<.28?'rise':travel<o.warn+o.duration*.5?'aim':progress<.59?'fire':progress<1?'dive':'splash';
+      return {x,y:progress<0||progress>1?312:303-o.height*Math.sin(Math.PI*progress),progress:progress>=1?Math.min(1,(travel-o.warn-o.duration)/45):Math.max(0,progress),stage,active:progress>=0&&progress<=1};
+    }
+    if(o.type==='laser')return {x,y:o.y,active:travel>=o.activation&&travel<o.expires};
+    return {x,y:o.type==='meteor'?o.y+scroll*o.fall:o.type==='drone'?o.baseY:o.y,active:true};
+  }
+  function horizon(o,pilotX){
+    if(aquatic(o))return Math.max(0,o.warn+o.duration+40-(o.travel||0));
+    if(o.type==='laser')return Math.max(0,o.expires-(o.travel||0));
+    return (o.x-pilotX+bounds(o).x+16)/rate(o);
   }
 
   function bounds(obstacle) {
+    if(obstacle.type==='shark')return {x:23,y:19};
+    if(obstacle.type==='piranha')return {x:13,y:13};
+    if(obstacle.type==='laser')return {x:obstacle.small?9:14,y:obstacle.small?2:3};
     if(obstacle.type==='meteor')return {x:8,y:8};
     return obstacle.type === 'gate'
       ? { x: 5, y: obstacle.len / 2 + 3 }
@@ -33,8 +37,8 @@
     if(y>=WATER_Y-margin)return false;
     return obstacles.every(o => {
       const box = bounds(o);
-      const x = o.x - scroll * (o.type === 'rocket' ? 1.45 : 1);
-      const center = o.type === 'drone' ? o.baseY : o.y + (o.type==='meteor'?scroll*o.fall:0);
+      const at=pose(o,scroll);if(!at.active)return true;
+      const x=at.x,center=at.y;
       const sweep = o.type === 'drone' ? 13 : 0;
       return Math.abs(x - pilotX) >= box.x + 10 + margin ||
         Math.abs(center - y) >= box.y + 20 + sweep + margin;
@@ -44,6 +48,13 @@
   // Protect a coin's complete remaining lifetime, including faster rockets.
   function coinClear(coin, o) {
     const box = bounds(o);
+    if(aquatic(o)||o.type==='laser'){
+      // Conservatively cover relative motion and the complete vertical jump sweep.
+      const remaining=aquatic(o)?Math.max(0,o.warn+o.duration-(o.travel||0)):Math.max(0,o.expires-(o.travel||0));
+      const dx=o.x-coin.x,end=dx+(1-rate(o))*remaining;
+      if(Math.min(dx,end)>box.x+23||Math.max(dx,end)<-box.x-23)return true;
+      return aquatic(o)?coin.y<303-o.height-box.y-33:Math.abs(coin.y-o.y)>box.y+33;
+    }
     if(o.type==='meteor'){
       // Coins and falling rocks share horizontal scrolling. Reserve the rock's
       // complete downward sweep while the coin can still be collected.
@@ -75,15 +86,15 @@
   // replayable input witness; failure only omits a spawn, never weakens safety.
   function plan({ pilot, distance, obstacles, coins, endScroll, reactionTime = 0, held = false }) {
     const targets = coins.filter(c => c.x > pilot.x + 3).sort((a, b) => a.x - b.x);
-    const end = Math.max(endScroll || 0, ...targets.map(c => c.x - pilot.x + 28), ...obstacles.map(o => (o.x - pilot.x + bounds(o).x + 16) / (o.type === 'rocket' ? 1.45 : 1)), 30);
+    const end = Math.max(endScroll || 0, ...targets.map(c => c.x - pilot.x + 28), ...obstacles.map(o => horizon(o,pilot.x)), 30);
     const frames = forecast(distance, end);
     if (!frames.length || frames[frames.length - 1] < end) return null;
-    let beam = [{ y: pilot.y, vy: pilot.vy, next: 0, parent: null, path: [] }];
+    let beam = [{ ...pilot, next: 0, parent: null, path: [] }];
     const branchSteps = 18; // At most one input change per 150 ms.
     for (let offset = 0; offset < frames.length; offset += branchSteps) {
       const candidates = new Map();
       for (const previous of beam) for (const thrust of [false, true]) {
-        const node = { y: previous.y, vy: previous.vy, next: previous.next,
+        const node = { ...previous, next: previous.next,
           parent: previous, path: [], thrust };
         let valid = true;
         for (let j = offset; j < Math.min(offset + branchSteps, frames.length); j++) {
@@ -101,7 +112,7 @@
         if (!valid) continue;
         const next = targets[node.next];
         node.rank = next ? Math.abs(node.y - 2 - next.y) + Math.abs(node.vy) * .06 : Math.abs(node.vy) * .06;
-        const key = Math.round(node.y / 4) + ':' + Math.round(node.vy / 12) + ':' + node.next;
+        const key = Math.round(node.y / 4) + ':' + Math.round(node.vy / 12) + ':' + node.next + ':' + Math.round((node.charge||0)*5) + ':' + Math.ceil((node.boost||0)*3) + ':' + !!node.boostSpent;
         if (!candidates.has(key) || candidates.get(key).rank > node.rank) candidates.set(key, node);
       }
       beam = [...candidates.values()].sort((a, b) => a.rank - b.rank).slice(0, 72);
@@ -165,5 +176,19 @@
     return {obstacles:group,path,mode,progress,span:Math.max(...arrivals)-Math.min(...arrivals)};
   }
 
-  globalThis.JetlevLevel = Object.freeze({ STEP, WATER_Y, speedAt, fly, bounds, safe, coinClear, plan, formation, encounter });
+  function creatureEncounter({pilot,distance,width,lava=false,obstacles=[],coins=[],reservations=[],held=false,random=Math.random}){
+    const speed=speedAt(distance),group=[],count=lava?2:1;
+    for(let i=0;i<count;i++){
+      const height=lava?85+random()*120:95+random()*135;
+      const warn=speed*(.9+i*.65),duration=speed*(lava?1.85:2.1),fire=warn+duration*.5;
+      const x=pilot.x+.4*(warn+duration*(.72+random()*.14));
+      group.push({type:lava?'piranha':'shark',x,y:312,height,warn,duration,travel:0,lava,passed:false});
+      group.push({type:'laser',x:x-.4*fire-(lava?5:12)+2.4*fire,y:303-height-2,travel:0,activation:fire,expires:fire+speed*1.2,small:lava,lava,passed:false});
+    }
+    if(group.some(o=>!coins.every(c=>coinClear(c,o))||!reservations.every(p=>safe(p.y,p.x-pilot.x,pilot.x,[o]))))return null;
+    const path=plan({pilot,distance,obstacles:[...obstacles,...group],coins,reactionTime:.35,held});
+    return path?{obstacles:group,path}:null;
+  }
+
+  globalThis.JetlevLevel = Object.freeze({ STEP, WATER_Y, speedAt, fly, bounds, safe, coinClear, plan, formation, encounter, creatureEncounter, pose, rate, aquatic, horizon });
 })();

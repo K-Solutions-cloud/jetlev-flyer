@@ -1,14 +1,14 @@
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
 const elements={},events={};let frame;
 const gradient={addColorStop(){}};
-const ctx=new Proxy({}, {get:(o,k)=>o[k]||(k==='createRadialGradient'?()=>gradient:()=>{}),set:(o,k,v)=>(o[k]=v,true)});
-const element=id=>elements[id] ||= {hidden:['hud','result','pause-screen','toast','event-badge'].includes(id),innerHTML:'',textContent:'',style:{setProperty(){}},classList:{toggle(){},remove(){},add(){}},setAttribute(){},focus(){},addEventListener(k,f){this[k]=f},setPointerCapture(){}};
+const ctx=new Proxy({}, {get:(o,k)=>o[k]||((k==='createRadialGradient'||k==='createLinearGradient')?()=>gradient:()=>{}),set:(o,k,v)=>(o[k]=v,true)});
+const element=id=>elements[id] ||= {hidden:['hud','result','pause-screen','toast','event-badge'].includes(id),innerHTML:'',textContent:'',style:{setProperty(){}},classList:{toggle(){},remove(){},add(){},contains(){return false;}},setAttribute(){},focus(){},addEventListener(k,f){this[k]=f},setPointerCapture(){}};
 Object.assign(element('game'),{getContext:()=>ctx,getBoundingClientRect:()=>({width:390,height:782})});
 const sandbox={console,Math,Number,devicePixelRatio:1,localStorage:{getItem:()=>null,setItem(){}},ResizeObserver:class{observe(){}},document:{getElementById:element,createElement:()=>({getContext:()=>ctx}),addEventListener(){}},window:{matchMedia:()=>({matches:false}),addEventListener:(k,f)=>events[k]=f},requestAnimationFrame:f=>frame=f};
-for(const path of ['level.js','effects.js','music.js','water.js','director.js','progression.js','theme.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
+for(const path of ['flight.js','level.js','heaven.js','effects.js','music.js','water.js','director.js','progression.js','theme.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
 let source=fs.readFileSync('game.js','utf8');
 // Test instrumentation stays outside the shipped game.
-source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual,profile,runPerfects,runShieldSaves,missionSignals,eruption,eruptionWarning,eruptionPending,eruptionVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,makeMeteor,updateEruption,hit};resize();requestAnimationFrame(frame);`);
+source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,t,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual,profile,runPerfects,runShieldSaves,missionSignals,eruption,eruptionWarning,eruptionPending,eruptionVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,makeMeteor,updateEruption,hit};resize();requestAnimationFrame(frame);`);
 sandbox.soundEvents=[];source=source.replace('function sfx(kind){','function sfx(kind){globalThis.soundEvents.push(kind);');
 sandbox.vibrations=[];sandbox.navigator={vibrate:pattern=>sandbox.vibrations.push(Array.from(pattern))};
 vm.runInNewContext(source,sandbox);const test=sandbox.test;
@@ -120,6 +120,33 @@ reset();test.set('shield=9;');tick(220);assert.equal(test.get().state,'over','no
 reset();test.set('p.y=240;p.vy=88;held=true;');for(let i=0;i<40;i++)test.update(1/120);assert.equal(test.get().state,'playing','timely thrust recovers above water');
 assert.ok(test.get().p.y<240);
 console.log('PASS: flight, effects, career, eruption/meteors, fatal water contact and active recovery.');
+
+// Shared aquatic collisions and lava wave integration, beyond trajectory-only tests.
+reset();test.set("pickups=[];reservations=[];p.y=150;obstacles=[{type:'shark',x:p.x,y:312,warn:100,duration:220,height:153,travel:0}];");test.update(1/120);assert.equal(test.get().state,'playing','submerged warning is harmless');
+test.set("obstacles[0].warn=0;obstacles[0].duration=100;obstacles[0].travel=50;obstacles[0].x=p.x;");test.update(1/120);assert.equal(test.get().state,'dying','jumping shark body is a real hazard');
+reset();test.set("p.y=150;shield=9;obstacles=[{type:'piranha',x:p.x,y:150,warn:0,duration:100,height:153,travel:50,family:'a'},{type:'laser',x:500,y:148,travel:0,activation:100,expires:300,family:'a',active:false}];");test.update(1/120);assert.equal(test.get().shield,0);assert.equal(test.get().obstacles.length,0,'shield destroys fish and its pending shot');
+const sources=new Set();let volleys=0;
+for(let i=0;i<12;i++){reset();test.set('dist=4000;eruption=6;obstacles=[];pickups=[];reservations=[];makeMeteor();');const rocks=test.get().obstacles;for(const r of rocks)sources.add(Math.round(r.x));if(rocks.length>1)volleys++;}
+assert.ok(sources.size>4,'meteor entry positions vary');assert.ok(volleys>0,'late lava waves include multiple rocks');
+reset();test.set('p.boost=4;p.boostSpent=true;held=true;');elements.pause.onclick();tick(60);assert.equal(test.get().p.boost,4,'pause freezes turbo duration');
+console.log('PASS: warning/body collision, shield cancels pending laser, meteor variation/volleys and paused boost.');
+
+// Bonus transitions must freeze the run and settle sky winnings once.
+reset();test.set('p.y=145;shield=7;obstacleTimer=4;');
+sandbox.JetlevBonus={roll:()=>({heaven:true})};
+test.set('startBillEvent();');assert.equal(test.get().state,'portal');
+const frozenDistance=test.get().dist,frozenY=test.get().p.y,frozenClock=test.get().t;
+for(let i=0;i<150;i++)test.update(1/120);
+assert.equal(test.get().state,'heaven');assert.equal(test.get().dist,frozenDistance);assert.equal(test.get().p.y,frozenY);assert.equal(test.get().shield,7);assert.equal(test.get().t,frozenClock,'normal drone clock freezes during bonus');
+const oldBox=elements.game.getBoundingClientRect;elements.game.getBoundingClientRect=()=>({width:780,height:390});
+test.set('heavenSession.bills=[{x:heavenSession.pilot.x+40,y:80}];resize();globalThis.skyGeometry=[heavenSession.pilot.x-p.x,heavenSession.width-W,heavenSession.bills[0].x-heavenSession.pilot.x];');
+assert.deepEqual(Array.from(sandbox.skyGeometry),[0,0,40],'rotation preserves sky pilot and note coordinates');elements.game.getBoundingClientRect=oldBox;test.set('resize();');
+elements.pause.onclick();test.update(1/120);assert.equal(test.get().state,'paused');elements.resume.onclick();assert.equal(test.get().state,'heaven');
+test.set('heavenSession.earned=35;heavenSession.time=.01;');for(let i=0;i<160&&test.get().state!=='return-ready';i++)test.update(1/120);
+assert.equal(test.get().state,'return-ready');assert.equal(test.get().coins,35);assert.equal(test.get().p.y,frozenY);
+elements.pause.onclick();elements.resume.onclick();assert.equal(elements['boost-hint'].hidden,false,'return instruction survives app pause');
+test.set('settleHeaven();press();');assert.equal(test.get().coins,35,'no duplicate sky payout');
+console.log('PASS: portal, isolated sky flight, pause/resume and once-only payout.');
 
 // Callouts are reserved for rare milestones; perfect rows and five-streaks stay instrumental.
 sandbox.voiceStarts=0;sandbox.voiceStops=0;

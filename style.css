@@ -1,5 +1,6 @@
 @import url("assets/fonts/fonts.css");
 @import url("career.css");
+@import url("bonus.css");
 
 .eruption-status{position:absolute;bottom:max(18px,env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);padding:7px 18px;border:2px solid #ffa866;background:#361d28ed;box-shadow:0 3px #161b29;color:#ffe4a0;font:900 24px var(--arcade);letter-spacing:1px;white-space:nowrap;pointer-events:none}
 
@@ -182,3 +183,21 @@ body{overscroll-behavior:none}
 .home-heading .square{width:44px;height:44px;font-size:25px;border:1px solid #ffffff30;background:#082d38;box-shadow:none;border-radius:10px}
 .hud{top:max(16px,env(safe-area-inset-top))}
 @media(orientation:landscape) and (max-height:600px){.home-heading{gap:12px;margin:0}.home-heading h1{margin:0}.home-logo{max-width:270px}}
+
+/* Tropical title: crisp little beach props frame a warm, readable wordmark. */
+.home-heading{align-items:flex-start;gap:14px;margin-bottom:12px}
+.home-brand{flex:1;min-width:0;max-width:340px}
+.paradise-lockup{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:9px;filter:drop-shadow(0 3px 0 #164652)}
+.home-heading .paradise-lockup h1{flex:0 1 auto;margin:0;text-align:center;line-height:.85;letter-spacing:.5px;font-family:var(--arcade);font-style:italic;text-shadow:none}
+.paradise-word{display:block;color:#fff2c9;font-size:clamp(29px,7.9vw,45px);font-weight:900}
+.glide-word{display:block;color:#ffe36a;font-size:clamp(35px,9.4vw,53px);font-weight:900;letter-spacing:3px;margin-top:3px}
+.paradise-lockup svg{width:37px;height:49px;flex-shrink:0;overflow:visible}
+.paradise-parasol{transform:rotate(-9deg)}
+.paradise-cocktail{transform:rotate(9deg)}
+@media(max-height:650px){.paradise-lockup{margin-top:6px;gap:3px}.paradise-word{font-size:28px}.glide-word{font-size:32px}.paradise-lockup svg{width:29px;height:39px}.home-heading{margin-bottom:9px}}
+@media(orientation:landscape) and (max-height:600px){.paradise-word{font-size:25px}.glide-word{font-size:29px}.paradise-lockup{margin-top:5px}.paradise-lockup svg{width:25px;height:34px}}
+
+.effect-dock .boost-card{--effect-color:#b0f7ff;background:#154853}
+@media(max-width:360px){.effect-dock{gap:3px}.effect-dock .effect-card{padding-left:4px;padding-right:4px;gap:3px;min-width:43px}.effect-dock .effect-card strong{font-size:16px}.effect-dock .effect-icon{width:14px;height:14px;flex-basis:14px}}
+
+.hud.sky .effect-dock,.hud.sky .combo{display:none}.hud.sky .hud-score strong{color:#fff4ad}.hud.sky .hud-coins{color:#a5ffb6}

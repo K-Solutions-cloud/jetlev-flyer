@@ -1,0 +1,37 @@
+const assert = require('node:assert/strict');
+require('../flight.js');
+require('../heaven.js');
+const { create, update } = globalThis.JetlevHeaven;
+const original = { x: 40, y: 150, vy: 0, boost: 2 };
+const snapshot = { ...original };
+const session = create({ pilot: original, width: 160, random: () => .5 });
+assert.notEqual(session.pilot, original);
+session.spawnTimer = 100;
+session.bills.push({ x: 40, y: 150, phase: 0 });
+assert.deepEqual(update(session, 1 / 60, false), { collected: 1, finished: false });
+assert.equal(session.earned, 5, 'bonus notes award coins, never another loot event');
+assert.equal(update(session, 1 / 60, false).collected, 0, 'pickup counts once');
+assert.deepEqual(original, snapshot, 'normal pilot state remains frozen');
+const elapsed = session.time;
+for (const dt of [0, -1, NaN, Infinity]) update(session, dt, true);
+assert.equal(session.time, elapsed, 'invalid deltas do not advance time');
+const expected = { ...session.pilot };
+JetlevFlight.fly(expected, true, 1 / 120);
+update(session, 1 / 120, true);
+assert.ok(Math.abs(session.pilot.y - expected.y) < 1e-9, 'shared flight physics');
+const falling = create({ pilot: { x: 40, y: 250, vy: 88 }, width: 160, random: () => .5 });
+for (let i = 0; i < 899; i++) {
+  const result = update(falling, 1 / 60, false);
+  assert.equal(result.finished, false);
+  assert.ok(falling.pilot.y <= 255, 'safe cloud floor');
+  assert.ok(falling.bills.length <= 60, 'bounded note field');
+  assert.ok(falling.bills.every(b => Number.isFinite(b.x) && b.y >= 37 && b.y <= 255));
+}
+assert.equal(update(falling, 1 / 60, false).finished, true, 'ends after exactly 15 seconds');
+assert.equal(falling.time, 0);
+const completed = JSON.stringify(falling);
+assert.deepEqual(update(falling, 1000, true), { collected: 0, finished: true });
+assert.equal(JSON.stringify(falling), completed, 'finished bonus is inert');
+const largeDelta = create({ pilot: original, width: 160 });
+assert.equal(update(largeDelta, 100000, false).finished, true, 'large finite deltas are bounded to remaining bonus');
+console.log('PASS: 15-second isolated sky bonus, shared flight, safe floor, bounded notes and single coin payout.');
