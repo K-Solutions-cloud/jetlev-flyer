@@ -21,6 +21,14 @@ Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundef
 - Der Tod zeigt einen kurzen Impact und eine 1,1-sekündige Pixel-Wasserexplosion mit synthetischem Bass-/Rausch-Sound.
 - Knappe Ausweichmanöver geben zwei Bonusmünzen. Der Distanzrekord wird lokal gespeichert.
 
+## Inselpass und Garage
+
+Die Türkislagune, der Palmenhafen und die Vulkanbucht besitzen jeweils drei kumulative Missionen. Jeder beendete Run zählt für die gewählte Insel; drei abgeschlossene Missionen öffnen die nächste. Freigeschaltete Inseln bleiben frei wählbar. Der Hafen hat mehr maritime Kameradrohnen, die Vulkanbucht frühere und häufigere Renn-Wasserflugzeuge. Flugphysik, Kollisionsgrenzen und die Prüfung erreichbarer Münzreihen bleiben identisch.
+
+Beim Run-Ende wandern die gesammelten Münzen einmalig in die Garage. Vier Looks verändern Anzugdetails und Wasserlicht; das originale rot-schwarze Jetlev-Gerät mit Versorgungsschlauch und separatem Motorboot bleibt erkennbar. Die Vorschau nutzt denselben Pilotenrenderer wie das Spiel. Käufe und Auswahl werden lokal gespeichert. Es gibt keine Echtgeldkäufe, täglichen Pflichten oder käuflichen Physikvorteile.
+
+`progression.js` verwaltet Missionen, Besitz und Münzbank, `career.js` die Menüs und `theme.js` die drei Inselwelten. Fortschritt ist lokal auf diesen Browser beschränkt; Löschen der Websitedaten entfernt ihn. `tests/progression.test.cjs` prüft Freischaltungen, Abrechnung, Käufe und beschädigte Speicherdaten. Der Browsertest prüft Kauf, Ausrüstung, Inselwahl, Neuladen und Offline-Spiel.
+
 ## Faire Münzformationen
 
 `level.js` teilt sich Flugphysik und Hindernisgrößen mit dem Spiel. Der Generator sucht für jede vollständige Formation einen konkreten Flugweg aus Halten-/Loslassen-Eingaben in 150-ms-Abschnitten. Die Simulation läuft wie das Spiel mit 120 Physikschritten pro Sekunde und berücksichtigt die steigende Geschwindigkeit. Alle Münzen müssen entlang desselben kollisionsfreien Wegs eingesammelt werden können; bestehende vorausliegende Münzen werden einbezogen.

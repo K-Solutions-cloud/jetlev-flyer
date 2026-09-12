@@ -1,4 +1,5 @@
 @import url("assets/fonts/fonts.css");
+@import url("career.css");
 
 :root{color-scheme:dark;--red:#ed1c24;--yellow:#ffe36a;--white:#fff;--ink:#202020;--arcade:'Barlow Condensed',Impact,sans-serif}
 *{box-sizing:border-box}

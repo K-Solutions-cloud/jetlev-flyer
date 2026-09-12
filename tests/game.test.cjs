@@ -5,10 +5,10 @@ const ctx=new Proxy({}, {get:(o,k)=>o[k]||(k==='createRadialGradient'?()=>gradie
 const element=id=>elements[id] ||= {hidden:['hud','result','pause-screen','toast','event-badge'].includes(id),innerHTML:'',textContent:'',style:{setProperty(){}},classList:{toggle(){},remove(){},add(){}},setAttribute(){},focus(){},addEventListener(k,f){this[k]=f},setPointerCapture(){}};
 Object.assign(element('game'),{getContext:()=>ctx,getBoundingClientRect:()=>({width:390,height:782})});
 const sandbox={console,Math,Number,devicePixelRatio:1,localStorage:{getItem:()=>null,setItem(){}},ResizeObserver:class{observe(){}},document:{getElementById:element,createElement:()=>({getContext:()=>ctx}),addEventListener(){}},window:{matchMedia:()=>({matches:false}),addEventListener:(k,f)=>events[k]=f},requestAnimationFrame:f=>frame=f};
-for(const path of ['level.js','effects.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
+for(const path of ['level.js','effects.js','progression.js','theme.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
 let source=fs.readFileSync('game.js','utf8');
 // Test instrumentation stays outside the shipped game.
-source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,hit};resize();requestAnimationFrame(frame);`);
+source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual,profile,runPerfects,runShieldSaves,missionSignals}),set:(fn)=>eval(fn),update,collectPower,makePattern,hit};resize();requestAnimationFrame(frame);`);
 sandbox.soundEvents=[];source=source.replace('function sfx(kind){','function sfx(kind){globalThis.soundEvents.push(kind);');
 sandbox.vibrations=[];sandbox.navigator={vibrate:pattern=>sandbox.vibrations.push(Array.from(pattern))};
 vm.runInNewContext(source,sandbox);const test=sandbox.test;
@@ -65,4 +65,43 @@ for(const kind of ['shield','magnet','flow','gold']){
 }
 assert.equal(new Set(starts).size,4,'distinct activation vibrations');
 assert.equal(new Set(ends).size,4,'distinct expiration vibrations');
-console.log('PASS: flight, powerups, rewards, effect lifecycle, distinct haptics, pause, death and input.');
+reset();const bankBefore=test.get().profile.bank;
+test.set('coins=17;dist=123;runPerfects=2;runShieldSaves=1;');
+const previousStats={...test.get().profile.islands.lagoon};
+elements.pause.onclick();elements.quit.onclick();
+assert.equal(test.get().profile.bank,bankBefore+17,'earned run coins reach garage');
+assert.equal(test.get().profile.islands.lagoon.distance,previousStats.distance+123);
+assert.equal(test.get().profile.islands.lagoon.perfects,previousStats.perfects+2);
+assert.equal(test.get().profile.islands.lagoon.shieldSaves,previousStats.shieldSaves+1);
+elements.quit.onclick();assert.equal(test.get().profile.bank,bankBefore+17,'repeat finish cannot duplicate bank');
+// Completing a mission across runs must signal once, then persist only at finish.
+test.set('Object.assign(profile,progression.load());profile.islands.lagoon.distance=599;profile.islands.lagoon.coins=59;profile.islands.lagoon.perfects=2;');
+reset();test.set('dist=1;coins=1;runPerfects=1;missionFeedback();');
+assert.equal(test.get().missionSignals.size,3,'cumulative run progress completes all three missions');
+assert.equal(test.get().rewardRings.length,3);
+test.set('missionFeedback();');
+assert.equal(test.get().rewardRings.length,3,'mission feedback never repeats each frame');
+assert.equal(test.get().profile.islands.lagoon.coins,59,'live previews do not prematurely bank coins');
+const saved=new Map();sandbox.localStorage.setItem=(key,value)=>saved.set(key,String(value));
+elements.pause.onclick();elements.quit.onclick();
+let persisted=JSON.parse(saved.get(sandbox.JetlevProgression.KEY));
+assert.equal(persisted.islands.lagoon.distance,600);
+assert.equal(persisted.islands.lagoon.coins,60);
+assert.equal(persisted.islands.lagoon.perfects,3);
+assert.equal(sandbox.JetlevProgression.isUnlocked(persisted,'harbor'),true);
+
+// Death and immediate replay each credit their own run, including when storage fails.
+reset();const deathBank=test.get().profile.bank;test.set('coins=23;dist=80;');test.hit();tick(75);
+assert.equal(test.get().state,'over');
+assert.equal(test.get().profile.bank,deathBank+23,'death credits the finished run');
+tick(60);elements.quit.onclick();
+assert.equal(test.get().profile.bank,deathBank+23,'late frames and repeated finish cannot duplicate death credit');
+elements.restart.onclick();test.set('obstacleTimer=100;coinTimer=100;powerTimer=100;');
+assert.equal(test.get().coins,0,'replay starts with no stale coin earnings');
+assert.equal(test.get().runPerfects,0);
+sandbox.localStorage.setItem=()=>{throw Error('storage unavailable');};
+test.set('coins=7;dist=40;');elements.pause.onclick();
+assert.doesNotThrow(()=>elements.quit.onclick(),'private-mode write failure cannot block results');
+assert.equal(test.get().state,'over');
+assert.equal(test.get().profile.bank,deathBank+30,'in-memory career remains usable without storage');
+console.log('PASS: flight, effects, input, cumulative mission feedback, quit/death/replay banking and unavailable storage.');

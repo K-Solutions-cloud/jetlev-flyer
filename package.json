@@ -9,7 +9,7 @@
     "build": "node scripts/build.mjs",
     "dev": "node scripts/serve.mjs .",
     "preview": "node scripts/serve.mjs dist",
-    "test": "node tests/flight.test.cjs && node tests/level.test.cjs && node tests/game.test.cjs",
+    "test": "node tests/flight.test.cjs && node tests/level.test.cjs && node tests/progression.test.cjs && node tests/game.test.cjs",
     "test:e2e": "playwright test",
     "check": "npm test && npm run build && npm run test:e2e"
   },
