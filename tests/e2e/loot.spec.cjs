@@ -1,0 +1,34 @@
+const {test,expect}=require('@playwright/test');
+const fs=require('node:fs'),path=require('node:path');
+const root=path.resolve(__dirname,'../..');
+test('loot reel reveals the fixed reward once, cancels safely, and keeps scratch available',async({page})=>{
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.setContent('<meta name="viewport" content="width=device-width, initial-scale=1"><style>body{margin:0;background:#05323e;--arcade:Arial}.cabinet{position:relative;width:390px;height:760px}</style><div class="cabinet"><button id="game">GAME</button></div>');
+  await page.addStyleTag({content:fs.readFileSync(path.join(root,'bonus.css'),'utf8')});
+  await page.addScriptTag({content:fs.readFileSync(path.join(root,'bonus.js'),'utf8')});
+  await page.evaluate(()=>{window.awards=[];window.resumes=0;window.cues=[];window.bonus=JetlevBonus.mount({onReward:(...value)=>awards.push(value),onResume:()=>resumes++,onCue:(...value)=>cues.push(value)});bonus.open({kind:'treasurewave'});});
+  await page.screenshot({path:'/tmp/jetlev-loot-chest.png'});
+  await expect(page.locator('.bonus-open')).toBeFocused();
+  await page.locator('.bonus-open').click();
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+  await page.waitForTimeout(200);expect(await page.evaluate(()=>awards.length)).toBe(0);
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+  await expect(page.locator('.bonus-scratch')).toBeHidden();
+  await page.locator('.bonus-odds summary').focus();await page.keyboard.press('Shift+Tab');await expect(page.locator('.bonus-odds summary')).toBeFocused();
+  await page.screenshot({path:'/tmp/jetlev-loot-opening.png'});
+  await expect(page.locator('.bonus-continue')).toBeEnabled({timeout:6000});
+  await page.locator('.bonus-continue').focus();await page.keyboard.press('Shift+Tab');await expect(page.locator('.bonus-odds summary')).toBeFocused();await page.keyboard.press('Tab');await expect(page.locator('.bonus-continue')).toBeFocused();
+  await expect(page.locator('.bonus-result')).toHaveText('MIDAS-WELLE');
+  await expect(page.locator('.bonus-description')).toContainText('LEGENDÄR');
+  expect(await page.evaluate(()=>awards)).toEqual([['treasurewave',0]]);
+  const centered=await page.evaluate(()=>{const a=document.querySelector('.bonus-reel').getBoundingClientRect(),b=document.querySelector('.bonus-prize').getBoundingClientRect();return Math.abs((a.x+a.width/2)-(b.x+b.width/2));});expect(centered).toBeLessThan(1);
+  await page.screenshot({path:'/tmp/jetlev-loot-prize.png'});
+  await page.locator('.bonus-continue').click();expect(await page.evaluate(()=>resumes)).toBe(1);
+  await page.evaluate(()=>bonus.open({kind:'shield'}));await page.locator('.bonus-open').click();await page.evaluate(()=>bonus.close());
+  await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>bonus.open({kind:'mini'}));await page.locator('.bonus-open').click();await expect(page.locator('.bonus-continue')).toBeEnabled();
+  expect(await page.evaluate(()=>awards)).toEqual([['treasurewave',0],['mini',8]]);
+  await page.locator('.bonus-continue').click();await page.evaluate(()=>bonus.open({kind:'magnet'}));await page.locator('.bonus-scratch').click();
+  for(let i=0;i<9;i++){if(await page.locator('.bonus-continue').isEnabled())break;await page.locator('.bonus-tile').nth(i).focus();await page.keyboard.press('Enter');}
+  expect(await page.evaluate(()=>awards)).toEqual([['treasurewave',0],['mini',8],['magnet',8]]);
+  expect(errors).toEqual([]);
+});

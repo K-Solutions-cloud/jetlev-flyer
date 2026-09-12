@@ -24,6 +24,8 @@ let toastRank=0,toastQueue=[],rewardDuck=0,magnetVisual=0;
 let shield=0,magnet=0,invulnerable=0,powerTimer=10,powerIndex=0;
 let eruption=0,eruptionWarning=0,eruptionVisual=0,eruptionPending=false,eruptionFinishing=false,meteorTimer=0,nextEruption=420;
 let fishTimer=12,lavaFishTimer=2,creatureId=0;
+const lootFx=globalThis.JetlevLootEffects;
+let loot={},lootSeen={},coconutTimer=0;
 let billTimer=20,scratch=null,heavenSession=null,heavenPaid=false,portalTime=0,bonusClock=0,resumeState='playing',goldVisual=0;
 let gold=0,goldPending=false,nextGold=220,formationId=0,formations=new Map();
 let jetFeel=0,renderY=155,previousY=155,deathEffect=null,impactHold=0,rewardRings=[];
@@ -98,8 +100,8 @@ function showToast(text,life=1.2,rank=1){
  pop('toast');toastLife=life;toastRank=rank;
  speakStreak(text);
 }
-function showHome(){scratch?.close();heavenSession=null;$('hud').classList.remove('sky');water.reset();eruption=eruptionWarning=eruptionVisual=0;eruptionPending=eruptionFinishing=false;$('eruption-status').hidden=true;career?.refresh();effectCues=[];toastQueue=[];toastRank=toastLife=0;deathEffect=null;rewardRings=[];shield=magnet=invulnerable=gold=0;state='home';clearInput();muteJet();reservations=[];obstacles=[];pickups=[];particles=[];texts=[];for(const id of ['hud','result','pause-screen','boost-hint','toast','event-badge'])$(id).hidden=true;$('intro').hidden=false;}
-function start(){scratch?.close();billTimer=rand(18,25);heavenSession=null;heavenPaid=false;portalTime=bonusClock=goldVisual=0;$('boost-hint').textContent='HALTEN ↑ · LANG HALTEN = TURBO';resumeState='playing';$('hud').classList.remove('sky');fishTimer=12;lavaFishTimer=2;stopVoice();voiceMilestones.clear();lastVoiceAt=-Infinity;lastVoiceClip='';director.reset();water.reset();$('eruption-status').hidden=true;career?.close();runId=globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);runIsland=profile.selectedIsland;runPerfects=runShieldSaves=0;runCommitted=false;missionSignals=new Set();effectMemory={shield:false,magnet:false,flow:false,gold:false,boost:false};effectExit={shield:0,magnet:0,flow:0,gold:0,boost:0};effectCues=[];toastQueue=[];toastRank=toastLife=rewardDuck=magnetVisual=0;initAudio();sfx('start');state='playing';clearInput();dist=coins=combo=comboLife=world=startAge=charge=flow=0;flowMax=6;milestone=100;soundtrack.reset();eruption=eruptionWarning=eruptionVisual=meteorTimer=0;eruptionPending=eruptionFinishing=false;nextEruption=runIsland==='sunset'?180:420;speed=100;shield=magnet=invulnerable=gold=0;goldPending=false;nextGold=220;powerTimer=10;powerIndex=0;formationId=0;formations.clear();deathEffect=null;rewardRings=[];jetFeel=0;impactHold=0;renderY=previousY=155;obstacleTimer=2.8;coinTimer=.4;reservations=[];obstacles=[];pickups=[];particles=[];texts=[];p={x:W*.27,y:155,vy:0};shake=flash=0;for(const id of ['intro','result','pause-screen'])$(id).hidden=true;$('hud').hidden=false;$('pause').hidden=false;$('boost-hint').hidden=false;showToast('GO!',.8);updateHud();canvas.focus({preventScroll:true});}
+function showHome(){loot={};lootSeen={};lootFx?.reset();scratch?.close();heavenSession=null;$('hud').classList.remove('sky');water.reset();eruption=eruptionWarning=eruptionVisual=0;eruptionPending=eruptionFinishing=false;$('eruption-status').hidden=true;career?.refresh();effectCues=[];toastQueue=[];toastRank=toastLife=0;deathEffect=null;rewardRings=[];shield=magnet=invulnerable=gold=0;state='home';clearInput();muteJet();reservations=[];obstacles=[];pickups=[];particles=[];texts=[];for(const id of ['hud','result','pause-screen','boost-hint','toast','event-badge'])$(id).hidden=true;$('intro').hidden=false;}
+function start(){loot={};lootSeen={};coconutTimer=0;lootFx?.reset();scratch?.close();billTimer=rand(18,25);heavenSession=null;heavenPaid=false;portalTime=bonusClock=goldVisual=0;$('boost-hint').textContent='HALTEN ↑ · LANG HALTEN = TURBO';resumeState='playing';$('hud').classList.remove('sky');fishTimer=12;lavaFishTimer=2;stopVoice();voiceMilestones.clear();lastVoiceAt=-Infinity;lastVoiceClip='';director.reset();water.reset();$('eruption-status').hidden=true;career?.close();runId=globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);runIsland=profile.selectedIsland;runPerfects=runShieldSaves=0;runCommitted=false;missionSignals=new Set();effectMemory={shield:false,magnet:false,flow:false,gold:false,boost:false};effectExit={shield:0,magnet:0,flow:0,gold:0,boost:0};effectCues=[];toastQueue=[];toastRank=toastLife=rewardDuck=magnetVisual=0;initAudio();sfx('start');state='playing';clearInput();dist=coins=combo=comboLife=world=startAge=charge=flow=0;flowMax=6;milestone=100;soundtrack.reset();eruption=eruptionWarning=eruptionVisual=meteorTimer=0;eruptionPending=eruptionFinishing=false;nextEruption=runIsland==='sunset'?180:420;speed=100;shield=magnet=invulnerable=gold=0;goldPending=false;nextGold=220;powerTimer=10;powerIndex=0;formationId=0;formations.clear();deathEffect=null;rewardRings=[];jetFeel=0;impactHold=0;renderY=previousY=155;obstacleTimer=2.8;coinTimer=.4;reservations=[];obstacles=[];pickups=[];particles=[];texts=[];p={x:W*.27,y:155,vy:0};shake=flash=0;for(const id of ['intro','result','pause-screen'])$(id).hidden=true;$('hud').hidden=false;$('pause').hidden=false;$('boost-hint').hidden=false;showToast('GO!',.8);updateHud();canvas.focus({preventScroll:true});}
 function pause(){if(!['playing','heaven','portal','returning','return-ready'].includes(state))return;resumeState=state;state='paused';clearInput();muteJet();$('pause-screen').hidden=false;$('pause').hidden=true;$('boost-hint').hidden=true;}
 function resume(){if(state!=='paused')return;initAudio();state=resumeState;$('boost-hint').hidden=state!=='return-ready';$('pause-screen').hidden=true;$('pause').hidden=false;canvas.focus({preventScroll:true});}
 function finish(){
@@ -269,6 +271,7 @@ function effectCard(id,label,remaining,max){
  card.setAttribute('aria-label',label+': '+seconds+' Sekunden');
 }
 function updateHud(){
+ lootFx?.hud(loot);
  $('distance').innerHTML=String(Math.floor(dist)).padStart(4,'0')+'<small>m</small>';
  if($('coins').textContent!==String(coins)){pop('coin-counter');$('coins').textContent=coins;}
  const active=flow>0,flowEnding=effectExit.flow>0;
@@ -302,7 +305,7 @@ function makePattern(){
 }
 function makeCoins(){
   const formation=level.formation({pilot:p,distance:dist,obstacles,existing:pickups,width:W});
-  if(formation){const id=++formationId;formations.set(id,{left:formation.coins.length,failed:false});for(const c of formation.coins)c.group=id;pickups.push(...formation.coins);reservations=formation.path;coinTimer=gold>0?1.1:rand(2.2,2.8);}
+  if(formation){const id=++formationId;formations.set(id,{left:formation.coins.length,failed:false});for(const c of formation.coins)c.group=id;pickups.push(...formation.coins);reservations=formation.path;coinTimer=gold>0||loot.coinrain>0?1.1:rand(2.2,2.8);}
   else coinTimer=.55;
 }
 function makeMeteor(){
@@ -407,7 +410,43 @@ function applyBonus(kind,amount){
  else if(kind==='boost'){p.boost=amount;p.boostSpent=true;p.charge=0;}
  else if(kind==='gold')goldPending=true;
  else if(kind==='coins')coins+=amount;
+ else if(kind==='treasurewave'){
+  const visible=obstacles.filter(o=>!o.destroyed&&o.x>-30&&o.x<W+20);
+  for(const o of visible)clearLootThreat(o);
+  obstacles=obstacles.filter(o=>!o.destroyed);coins+=Math.max(10,visible.length*5);
+  lootFx?.burst(kind,{x:p.x,y:p.y});reward(p.x,p.y,'#ffb544',3);
+ }else if(['mini','lifebuoy','coconut','coinrain','comboanchor','daredevil','bounty','dolphin','ceasefire'].includes(kind)){
+  loot[kind]=Math.max(loot[kind]||0,amount);lootSeen[kind]=false;
+  if(kind==='coinrain')coinTimer=Math.min(coinTimer,.2);
+  if(kind==='coconut')coconutTimer=0;
+ }
  updateHud();
+}
+function clearLootThreat(target){
+ for(const o of obstacles)if(o===target||(target.family&&o.family===target.family))o.destroyed=true;
+}
+function lootSignal(kind,active){
+ lootFx?.burst(kind,{x:p.x,y:p.y,active});
+ const pitch={mini:880,lifebuoy:520,coconut:220,coinrain:1046,comboanchor:660,daredevil:740,bounty:587,dolphin:990,ceasefire:440}[kind]||660;
+ note(active?pitch:pitch*.75,.14,'triangle',.025,0,active?pitch*1.5:pitch*.5);
+ if(!reducedMotion)try{navigator.vibrate?.(active?[7,28,11]:[5]);}catch{}
+}
+function updateLoot(dt){
+ lootFx?.update(dt);
+ for(const kind of Object.keys(loot)){
+  if(loot[kind]<=0)continue;
+  if(!lootSeen[kind]){lootSignal(kind,true);lootSeen[kind]=true;}
+  loot[kind]=Math.max(0,loot[kind]-dt);
+  if(loot[kind]===0){lootSignal(kind,false);if(kind==='mini')invulnerable=Math.max(invulnerable,.65);}
+ }
+ if(loot.ceasefire>0)for(const o of obstacles)if(o.type==='laser'){o.destroyed=true;}
+ if(loot.coconut>0){
+  coconutTimer-=dt;
+  if(coconutTimer<=0){
+   const target=obstacles.filter(o=>!o.destroyed&&o.x>p.x&&o.x<W+20&&o.type!=='laser').sort((a,b)=>a.x-b.x)[0];
+   if(target){clearLootThreat(target);lootFx?.burst('coconut',{x:p.x,y:p.y,targetX:target.x,targetY:target.y});burst(target.x,target.y,'#efc380',12,45);note(180,.12,'triangle',.035,0,65);coconutTimer=1.6;}
+  }
+ }
 }
 function resumeBonus(){
  if(state!=='scratch')return;state='return-ready';$('boost-hint').textContent='HALTEN ZUM WEITERFLIEGEN';$('boost-hint').hidden=false;clearInput();initAudio();canvas.focus({preventScroll:true});
@@ -446,9 +485,13 @@ if(updateBonus(dt))return;
 for(const ring of rewardRings)ring.age+=dt;rewardRings=rewardRings.filter(r=>r.age<r.life);
 for(const pt of particles){pt.x+=pt.vx*dt;pt.y+=pt.vy*dt;pt.vy+=dt*90;pt.life-=dt;}particles=particles.filter(pt=>pt.life>0);for(const tx of texts){tx.y-=dt*16;tx.life-=dt;}texts=texts.filter(tx=>tx.life>0);
 if(state==='dying'){water.update(dt,{nozzles:[],reducedMotion});fx.updateExplosion(deathEffect,dt);deathTimer-=dt;if(deathTimer<=0){finish();deathEffect=null;}return;}
-startAge+=dt;goldVisual+=((gold>0?1:0)-goldVisual)*(1-Math.exp(-dt*5));rewardDuck=Math.max(0,rewardDuck-dt);magnetVisual+=((magnet>0?1:0)-magnetVisual)*(1-Math.exp(-dt*10));shield=Math.max(0,shield-dt);magnet=Math.max(0,magnet-dt);invulnerable=Math.max(0,invulnerable-dt);gold=Math.max(0,gold-dt);if(dist>=nextGold){goldPending=true;nextGold+=240;}if(goldPending&&!eruptionPending&&!eruptionFinishing&&eruptionVisual<.1&&eruption<=0&&eruptionWarning<=0&&!obstacles.some(o=>o.x>p.x-40)){goldPending=false;gold=6;coinTimer=0;showToast('GOLD RUN!',1.2,3);sfx('combo');}flow=Math.max(0,flow-dt);if(dist>=milestone){showToast(milestone+' m!',1,2);sfx('combo');milestone+=100;}speed=level.speedAt(dist);world+=speed*dt;dist+=speed*dt*.16;comboLife-=dt;if(comboLife<=0)combo=0;
+updateLoot(dt);startAge+=dt;goldVisual+=((gold>0?1:0)-goldVisual)*(1-Math.exp(-dt*5));rewardDuck=Math.max(0,rewardDuck-dt);magnetVisual+=((magnet>0?1:0)-magnetVisual)*(1-Math.exp(-dt*10));shield=Math.max(0,shield-dt);magnet=Math.max(0,magnet-dt);invulnerable=Math.max(0,invulnerable-dt);gold=Math.max(0,gold-dt);if(dist>=nextGold){goldPending=true;nextGold+=240;}if(goldPending&&!eruptionPending&&!eruptionFinishing&&eruptionVisual<.1&&eruption<=0&&eruptionWarning<=0&&!obstacles.some(o=>o.x>p.x-40)){goldPending=false;gold=6;coinTimer=0;showToast('GOLD RUN!',1.2,3);sfx('combo');}flow=Math.max(0,flow-dt);if(dist>=milestone){showToast(milestone+' m!',1,2);sfx('combo');milestone+=100;}speed=level.speedAt(dist);world+=speed*dt;dist+=speed*dt*.16;if(!(loot.comboanchor>0))comboLife-=dt;if(comboLife<=0&&!(loot.comboanchor>0))combo=0;
 // Fixed-step acceleration and exponential drag keep touch flight responsive at every refresh rate.
-level.fly(p,held,dt);director.update(dt,p.y);updateWater(dt);if(p.y>=level.WATER_Y){p.y=level.WATER_Y;burst(p.x,303,eruptionVisual>.5?'#ffbc78':C.mint,24,65);hit();return;}jetFeel+=((held?1:0)-jetFeel)*(1-Math.exp(-dt*12));if(p.y>269&&Math.random()<dt*18)burst(p.x,302,'#a2f8df',2,22);
+level.fly(p,held,dt);director.update(dt,p.y);updateWater(dt);if(p.y>=level.WATER_Y&&loot.lifebuoy>0){
+ loot.lifebuoy=0;lootSignal('lifebuoy',false);p.y=230;p.vy=-65;previousY=p.y;invulnerable=Math.max(invulnerable,1);
+ for(const o of obstacles)if(Math.abs(o.x-p.x)<90)clearLootThreat(o);
+ obstacles=obstacles.filter(o=>!o.destroyed);lootFx?.burst('lifebuoy',{x:p.x,y:285});reward(p.x,285,'#ffcf77',2);showToast('ENTE RETTET!',1,3);
+ }if(p.y>=level.WATER_Y){p.y=level.WATER_Y;burst(p.x,303,eruptionVisual>.5?'#ffbc78':C.mint,24,65);hit();return;}jetFeel+=((held?1:0)-jetFeel)*(1-Math.exp(-dt*12));if(p.y>269&&Math.random()<dt*18)burst(p.x,302,'#a2f8df',2,22);
 if(jetGain&&audio){jetGain.gain.setTargetAtTime(sound?(.008+jetFeel*.034)*(rewardDuck>0?.6:1):0,audio.currentTime,.07);jetFilter.frequency.setTargetAtTime(390+jetFeel*900,audio.currentTime,.1);}
 // Music uses a dedicated gain bus: scheduled notes fall silent immediately on pause/mute.
 if(musicBus&&audio)musicBus.gain.setTargetAtTime(sound?1:0,audio.currentTime,.12);
@@ -461,6 +504,7 @@ fishTimer-=dt;if(fishTimer<=0&&dist>140&&gold<=0&&!goldPending&&!eruptionPending
 obstacleTimer-=dt;coinTimer-=dt;if(obstacleTimer<=0&&gold<=0&&!goldPending&&!eruptionPending&&!eruptionFinishing&&eruptionVisual<.1&&eruption<=0&&eruptionWarning<=0&&eruptionVisual<.05)makePattern();if(coinTimer<=0)makeCoins();powerTimer-=dt;if(powerTimer<=0)makePower();
 for(const o of obstacles){
  if(o.destroyed)continue;
+ if(loot.ceasefire>0&&o.type==='laser'){o.destroyed=true;continue;}
  const delta=speed*dt,wasActive=o.active;
  if(level.aquatic(o)||o.type==='laser'){
   const oldStage=o.stage;const at=level.pose(o,delta);o.travel+=delta;Object.assign(o,at);
@@ -468,8 +512,8 @@ for(const o of obstacles){
   if(o.type==='laser'&&o.active&&!wasActive){note(o.small?980:710,.14,'sawtooth',.025,0,220);burst(o.x,o.y,o.small?'#ff9866':'#93fbff',5,25);}
   if(!o.active)continue;
  }else{o.x-=delta*level.rate(o);if(o.type==='drone')o.y=o.baseY+Math.sin(t*2+o.phase)*13;else if(o.type==='meteor')o.y+=delta*o.fall;}
- const {x:rx,y:ry}=level.bounds(o);if(Math.abs(p.x-o.x)<rx+10&&Math.abs(p.y-o.y)<ry+20){if(invulnerable>0)continue;if(shield>0){runShieldSaves++;shield=0;invulnerable=.85;o.destroyed=true;if(level.aquatic(o))for(const shot of obstacles)if(shot.family===o.family&&shot.type==='laser'&&!shot.active)shot.destroyed=true;reward(p.x,p.y,C.mint);burst(o.x,o.y,C.mint,22,75);note(170,.18,'triangle',.07,0,60);showToast('GERETTET!',.6);continue;}hit();return;}if(!o.passed&&o.x<p.x-26){o.passed=true;if(Math.abs(p.y-o.y)<ry+33){coins+=2;note(659,.1,'triangle',.05);texts.push({x:p.x+12,y:p.y-22,text:'+2 KNAPP!',life:.8,color:C.mint});burst(p.x,p.y,C.mint,5,30);}}}
-obstacles=obstacles.filter(o=>!o.destroyed&&(level.aquatic(o)?o.travel<o.warn+o.duration+45:o.type==='laser'?o.travel<o.expires&&o.x>-30:o.x>-30&&o.y<H+35));for(const c of pickups){c.x-=speed*dt;if(!c.power&&magnet>0&&Math.hypot(c.x-p.x,c.y-p.y)<88){const attracted={...c,x:c.x+(p.x-c.x)*dt*7,y:c.y+(p.y-c.y)*dt*7};if(obstacles.every(o=>level.coinClear(attracted,o))){c.x=attracted.x;c.y=attracted.y;}}if(Math.abs(c.x-p.x)<11&&Math.abs(c.y-p.y+2)<13){c.taken=true;if(c.power==='lottery'){startBillEvent();return;}if(c.power){collectPower(c);continue;}const value=flow>0?2:1;coins+=value;combo++;if(flow<=0){charge++;if(charge>=10){charge=0;flow=6;flowMax=6;showToast('MÜNZEN ×2!',1.2,3);sfx('combo');}}comboLife=2;sfx('coin');burst(c.x,c.y,C.yellow,7,35);texts.push({x:c.x,y:c.y-8,text:'+'+value,life:.5,color:C.yellow});if(combo%5===0){sfx('streak');showToast(combo+' STREAK!',1,2);reward(p.x,p.y,C.mint,Math.min(3,1.5+combo/20));burst(p.x,p.y-5,C.cream,reducedMotion?5:14,60);}completeCoin(c);}}for(const c of pickups)if(!c.taken&&c.x<=-10){const group=formations.get(c.group);if(group){group.failed=true;group.left--;if(group.left===0)formations.delete(c.group);}}pickups=pickups.filter(c=>!c.taken&&c.x>-10);
+ const {x:rx,y:ry}=level.bounds(o);if(Math.abs(p.x-o.x)<rx+10*(loot.mini>0?.65:1)&&Math.abs(p.y-o.y)<ry+20*(loot.mini>0?.65:1)){if(invulnerable>0)continue;if(shield>0){runShieldSaves++;shield=0;invulnerable=.85;o.destroyed=true;if(level.aquatic(o))for(const shot of obstacles)if(shot.family===o.family&&shot.type==='laser'&&!shot.active)shot.destroyed=true;reward(p.x,p.y,C.mint);burst(o.x,o.y,C.mint,22,75);note(170,.18,'triangle',.07,0,60);showToast('GERETTET!',.6);continue;}hit();return;}if(!o.passed&&o.x<p.x-26){o.passed=true;if(loot.bounty>0){coins+=2;lootFx?.burst('bounty',{x:o.x,y:o.y});}if(Math.abs(p.y-o.y)<ry+33){coins+=loot.daredevil>0?8:2;note(659,.1,'triangle',.05);texts.push({x:p.x+12,y:p.y-22,text:loot.daredevil>0?'+8 KNAPP!':'+2 KNAPP!',life:.8,color:C.mint});burst(p.x,p.y,C.mint,5,30);}}}
+obstacles=obstacles.filter(o=>!o.destroyed&&(level.aquatic(o)?o.travel<o.warn+o.duration+45:o.type==='laser'?o.travel<o.expires&&o.x>-30:o.x>-30&&o.y<H+35));for(const c of pickups){c.x-=speed*dt;if(!c.power&&magnet>0&&Math.hypot(c.x-p.x,c.y-p.y)<88){const attracted={...c,x:c.x+(p.x-c.x)*dt*7,y:c.y+(p.y-c.y)*dt*7};if(obstacles.every(o=>level.coinClear(attracted,o))){c.x=attracted.x;c.y=attracted.y;}}if(Math.abs(c.x-p.x)<11&&Math.abs(c.y-p.y+2)<13){c.taken=true;if(c.power==='lottery'){startBillEvent();return;}if(c.power){collectPower(c);continue;}const value=flow>0?2:1;coins+=value;combo++;if(flow<=0){charge++;if(charge>=10){charge=0;flow=6;flowMax=6;showToast('MÜNZEN ×2!',1.2,3);sfx('combo');}}comboLife=2;sfx('coin');burst(c.x,c.y,C.yellow,7,35);texts.push({x:c.x,y:c.y-8,text:'+'+value,life:.5,color:C.yellow});if(combo%5===0){sfx('streak');showToast(combo+' STREAK!',1,2);reward(p.x,p.y,C.mint,Math.min(3,1.5+combo/20));burst(p.x,p.y-5,C.cream,reducedMotion?5:14,60);}completeCoin(c);}}for(const c of pickups)if(!c.taken&&c.x<=-10){if(loot.dolphin>0&&!c.power){c.taken=true;coins+=flow>0?2:1;completeCoin(c);lootFx?.burst('dolphin',{x:5,y:c.y});note(990,.055,'sine',.012);continue;}const group=formations.get(c.group);if(group){group.failed=true;group.left--;if(group.left===0)formations.delete(c.group);}}pickups=pickups.filter(c=>!c.taken&&c.x>-10);
 if(Math.random()<dt*(25+jetFeel*65))particles.push({x:p.x+(Math.random()<.5?-14:13),y:p.y-5,vx:-speed*.4+rand(-10,10),vy:rand(55,110),life:rand(.15,.4),size:1,color:'#c5ffed'});
 updateEffectSignals(dt);
 if(toastLife>0){toastLife-=dt;if(toastLife<=0){$('toast').hidden=true;toastRank=0;const next=toastQueue.shift();if(next)showToast(next.text,next.life,next.rank);}}$('boost-hint').hidden=startAge>5;uiTimer-=dt;if(uiTimer<=0){missionFeedback();updateHud();uiTimer=.06;}
@@ -566,7 +610,7 @@ function drawEffectCue(cue){
  g.restore();
 }
 function updateWater(dt,home=false){
- const x=home?W*.5:p.x,y=home?145+Math.sin(t*2.5)*4:p.y,scale=home?1.45:.85,kit=currentKit();
+ const x=home?W*.5:p.x,y=home?145+Math.sin(t*2.5)*4:p.y,scale=home?1.45:.85*(loot.mini>0?.65:1),kit=currentKit();
  water.update(dt,{nozzles:[{x:x-16*scale,y:y-9*scale},{x:x+15*scale,y:y-9*scale}],thrust:home?.6:jetFeel,velocityY:home?Math.cos(t*2.5)*10:p.vy,color:kit.trail,rainbow:!!kit.rainbow,reducedMotion,boost:home?0:p.boost||0,charge:home?0:(p.charge||0)/1.25});
 }
 function render(){
@@ -579,17 +623,19 @@ function render(){
   g.restore();ctx.drawImage(screen,0,0,canvas.width,canvas.height);return;
  }
  g.save();if(shake)g.translate(Math.round(rand(-shake,shake)),Math.round(rand(-shake,shake)));background();water.draw(g);
-if(state==='home'){const x=W*.5,y=145+Math.sin(t*2.5)*4;rect(x-13,291,30,2,'#72c9bd');rider(x,y,1.45,true);for(let i=0;i<5;i++)coin({x:x+36+Math.sin(i*.7)*11,y:175+i*13,phase:i});}else{for(const c of pickups){if(c.power)drawPower(c);else coin(c);}for(const o of obstacles)obstacle(o);if(flow>0&&state!=='dying')drawCoinBoost(p.x,renderY);if(state!=='dying'){drawMagnet(p.x,renderY);rider(mode==='portal'?p.x+(W*.5-p.x)*portalTime:p.x,mode==='portal'?renderY+(H*.45-renderY)*portalTime:renderY,mode==='portal'?.85*(1-portalTime*.9):.85,jetFeel);drawMagnetBuddy(p.x,renderY);}if(shield>0)drawShield(p.x,renderY);drawRocketWarnings();drawMeteorWarnings();drawLaserWarnings();for(const pt of particles)rect(pt.x,pt.y,pt.size,pt.size,pt.color);g.font='bold 8px monospace';g.textAlign='center';for(const tx of texts){g.fillStyle=C.ink;g.fillText(tx.text,Math.round(tx.x+1),Math.round(tx.y+1));g.fillStyle=tx.color;g.fillText(tx.text,Math.round(tx.x),Math.round(tx.y));}}
+if(state==='home'){const x=W*.5,y=145+Math.sin(t*2.5)*4;rect(x-13,291,30,2,'#72c9bd');rider(x,y,1.45,true);for(let i=0;i<5;i++)coin({x:x+36+Math.sin(i*.7)*11,y:175+i*13,phase:i});}else{for(const c of pickups){if(c.power)drawPower(c);else coin(c);}for(const o of obstacles)obstacle(o);if(flow>0&&state!=='dying')drawCoinBoost(p.x,renderY);if(state!=='dying'){drawMagnet(p.x,renderY);rider(mode==='portal'?p.x+(W*.5-p.x)*portalTime:p.x,mode==='portal'?renderY+(H*.45-renderY)*portalTime:renderY,mode==='portal'?.85*(1-portalTime*.9):.85*(loot.mini>0?.65:1),jetFeel);drawMagnetBuddy(p.x,renderY);}if(shield>0)drawShield(p.x,renderY);if(state!=='dying'&&state!=='over')lootFx?.draw(g,{p:{...p,y:renderY},t,W,H,active:loot,reducedMotion});drawRocketWarnings();drawMeteorWarnings();drawLaserWarnings();for(const pt of particles)rect(pt.x,pt.y,pt.size,pt.size,pt.color);g.font='bold 8px monospace';g.textAlign='center';for(const tx of texts){g.fillStyle=C.ink;g.fillText(tx.text,Math.round(tx.x+1),Math.round(tx.y+1));g.fillStyle=tx.color;g.fillText(tx.text,Math.round(tx.x),Math.round(tx.y));}}
 for(const cue of effectCues)drawEffectCue(cue);for(const ring of rewardRings)drawRewardRing(ring);if(deathEffect)fx.drawExplosion(g,deathEffect);if(goldVisual>.01)theme.drawGoldGlow(g,{W,H,t,amount:goldVisual,reducedMotion});
 if(mode==='portal')theme.drawPortal(g,{W,H,t:bonusClock,progress:portalTime,reducedMotion});
 if(mode==='returning')theme.drawPortal(g,{W,H,t:bonusClock,progress:portalTime,exiting:true,reducedMotion});
 if(flash>0)rect(0,0,W,H,'#fff1cf99');g.restore();ctx.drawImage(screen,0,0,canvas.width,canvas.height);}
 function frame(now){if(document.hidden){last=now;acc=0;requestAnimationFrame(frame);return;}const elapsed=Math.min((now-last)/1000||0,.06);last=now;if(state!=='paused'){acc+=elapsed;while(acc>=1/120){update(1/120);acc-=1/120;}}renderY=state==='playing'?previousY+(p.y-previousY)*(acc/level.STEP):p.y;render();requestAnimationFrame(frame);}
-if(globalThis.JetlevBonus?.mount)scratch=globalThis.JetlevBonus.mount({onReward:applyBonus,onResume:resumeBonus,onCue:kind=>{
+if(globalThis.JetlevBonus?.mount)scratch=globalThis.JetlevBonus.mount({onReward:applyBonus,onResume:resumeBonus,onCue:(kind,rarity)=>{
  initAudio();
- if(kind==='scratch')note(1200,.025,'triangle',.009,0,750);
+ if(kind==='tick'){note(520,.035,'square',.012,0,390);if(!reducedMotion)try{navigator.vibrate?.(3);}catch{}}
+ else if(kind==='open'){note(170,.18,'triangle',.04,0,340);}
+ else if(kind==='scratch')note(1200,.025,'triangle',.009,0,750);
  else if(kind==='reveal'){note(740,.08,'sine',.035,0,990);if(!reducedMotion)try{navigator.vibrate?.(6);}catch{}}
- else{sfx('streak');if(!reducedMotion)try{navigator.vibrate?.([10,30,18]);}catch{}}
+ else{sfx('streak');if(rarity==='legendary'||rarity==='epic'){note(523,.35,'triangle',.04);note(784,.4,'sine',.035,.1);note(1046,.45,'sine',.03,.2);}if(!reducedMotion)try{navigator.vibrate?.([10,30,18]);}catch{}}
 }});
 if(globalThis.JetlevCareer){
  const change=(action,kind)=>{

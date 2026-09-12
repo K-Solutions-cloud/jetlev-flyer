@@ -19,3 +19,45 @@
 @keyframes bonus-reveal{0%{transform:scale(.91)}55%{transform:scale(1.05)}100%{transform:none}}
 @media(max-height:560px){.bonus-overlay{padding:10px}.bonus-ticket{width:min(100%,285px);padding:12px}.bonus-ticket h2{font-size:34px}.bonus-instruction{margin:8px 0 10px;font-size:13px}.bonus-grid{gap:6px}.bonus-result{margin:10px 0 8px;font-size:20px;min-height:24px}.bonus-continue{min-height:45px;font-size:23px}.bonus-footnote{margin-top:9px}.bonus-symbol{font-size:29px}}
 @media(prefers-reduced-motion:reduce){.bonus-ticket,.bonus-tile.revealed,.bonus-won .bonus-result{animation:none}.bonus-tile canvas,.bonus-continue{transition:none}}
+
+.bonus-loot{position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 32%,#267662,#0b3a3f 63%,#072b38);padding-top:19px}
+.bonus-loot h2{font-size:42px;line-height:.92;letter-spacing:1px}
+.bonus-loot .bonus-instruction{font-size:12px;letter-spacing:2px;margin:12px 0 0}
+.bonus-chest{height:163px;position:relative;display:grid;place-items:center;isolation:isolate}
+.bonus-chest svg{height:142px;width:180px;overflow:visible;filter:drop-shadow(0 12px 5px #002c38aa);animation:chest-bob 2.5s ease-in-out infinite}
+.bonus-chest-lid{transform-origin:48px 38px}
+.bonus-rays{position:absolute;width:164px;height:164px;z-index:-1;border-radius:50%;background:repeating-conic-gradient(from 0deg,#a5ffbd18 0deg 15deg,transparent 15deg 36deg);mask-image:radial-gradient(#000 10%,transparent 70%);animation:chest-rays 18s linear infinite}
+.bonus-chest.opening svg{animation:chest-squeeze .52s ease-in both}
+.bonus-chest.opening .bonus-chest-lid{animation:chest-lid .52s ease-in both}
+.bonus-reel{height:163px;position:relative;overflow:hidden;display:flex;align-items:center;margin:0 -16px;background:linear-gradient(90deg,#011d2555,#1b605750,#011d2555);border-block:1px solid #cfffd023;mask-image:linear-gradient(90deg,transparent,#000 8% 92%,transparent)}
+.bonus-reel::after{content:'';position:absolute;left:50%;top:24px;width:100px;height:115px;transform:translateX(-50%);border:2px solid #fff4b8;border-radius:13px;box-shadow:0 0 16px #f9e9aa55;pointer-events:none}
+.bonus-pointer{position:absolute;top:4px;left:50%;transform:translateX(-50%);z-index:2;font-size:21px;color:#fff1a4;filter:drop-shadow(0 2px #072b38)}
+.bonus-track{display:flex;gap:8px;flex-shrink:0;will-change:transform}
+.bonus-card{box-sizing:border-box;width:96px;height:110px;flex:none;border:2px solid var(--card-rarity);border-radius:10px;background:linear-gradient(145deg,#164c45,#062b35);box-shadow:inset 0 0 18px color-mix(in srgb,var(--card-rarity) 20%,transparent);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px;color:#f6fff0}
+.bonus-card>span{font:900 35px/1 var(--arcade);color:var(--card-rarity);filter:drop-shadow(0 0 8px var(--card-rarity))}
+.bonus-card b{font:900 12px/1.1 var(--arcade);margin:6px 0 4px;overflow-wrap:anywhere}.bonus-card small{font:800 8px var(--arcade);color:#fff;color:color-mix(in srgb,var(--card-rarity) 65%,white);letter-spacing:.2px}
+.bonus-description{margin:0 0 12px;color:#c7edda;font:700 13px/1.35 var(--arcade)}
+.bonus-loot .bonus-result{font-size:23px;min-height:28px;margin:10px 0 7px}
+.bonus-open{width:100%;min-height:54px;border:1px solid #fff0b6;border-radius:12px;background:linear-gradient(#ffe99f,#f6bf60);box-shadow:0 4px #9b783b,0 0 25px #ffc66a15;color:#153d38;font:900 23px var(--arcade);letter-spacing:.6px;transition:transform .15s}
+.bonus-open:active{transform:translateY(3px) scale(.98)}
+.bonus-scratch{display:block;width:100%;min-height:44px;margin-top:8px;background:none;border:0;color:#b4dfcd;font:800 12px var(--arcade);letter-spacing:1px}
+.bonus-odds{color:#a8cebf;font:600 11px/1.45 var(--arcade);margin-top:12px}.bonus-odds summary{cursor:pointer;min-height:28px;padding:6px;list-style-position:inside;letter-spacing:1px}.bonus-odds span{display:inline-block;margin:2px 6px}.bonus-odds p{margin:5px 0}
+.bonus-overlay [hidden]{display:none!important}
+.bonus-won .bonus-loot{border-color:var(--rarity);box-shadow:0 0 38px color-mix(in srgb,var(--rarity) 40%,transparent),inset 0 0 40px color-mix(in srgb,var(--rarity) 15%,transparent)}
+.bonus-won .bonus-loot .bonus-result{color:#fff;color:color-mix(in srgb,var(--rarity) 65%,white);text-shadow:0 1px #001f27,0 0 15px color-mix(in srgb,var(--rarity) 45%,transparent)}
+.bonus-prize{animation:prize-pop .65s cubic-bezier(.2,.8,.2,1) both;box-shadow:inset 0 0 26px color-mix(in srgb,var(--card-rarity) 30%,transparent),0 0 12px var(--card-rarity)}
+.bonus-overlay button:focus-visible,.bonus-odds summary:focus-visible{outline:3px solid #fff;outline-offset:3px}
+@keyframes chest-bob{0%,100%{transform:translateY(3px) rotate(-2deg)}50%{transform:translateY(-5px) rotate(2deg)}}
+@keyframes chest-rays{to{transform:rotate(360deg)}}
+@keyframes chest-squeeze{0%{transform:scale(1)}35%{transform:translateY(12px) scale(1.2,.75)}68%{transform:translateY(-13px) scale(.85,1.2)}100%{transform:translateY(-7px) scale(1.1);opacity:0}}
+@keyframes chest-lid{50%{transform:none}100%{transform:translateY(-24px) rotate(-16deg)}}
+@keyframes prize-pop{0%{transform:scale(.84,1.13)}40%{transform:scale(var(--prize-pop,1.1),.94)}70%{transform:scale(.98,1.03)}100%{transform:scale(1)}}
+@media(max-height:660px){.bonus-loot h2{font-size:34px}.bonus-loot .bonus-instruction{margin-top:8px}.bonus-chest,.bonus-reel{height:148px}.bonus-reel::after{top:17px}.bonus-pointer{top:0}.bonus-chest svg{height:126px}.bonus-loot .bonus-result{font-size:21px}.bonus-loot .bonus-footnote{margin-top:5px}.bonus-odds{margin-top:5px}.bonus-description{margin-bottom:8px}}
+@media(prefers-reduced-motion:reduce){.bonus-chest svg,.bonus-rays,.bonus-chest.opening svg,.bonus-chest.opening .bonus-chest-lid,.bonus-prize{animation:none}.bonus-open{transition:none}}
+
+.bonus-hidden *{animation-play-state:paused!important}
+
+.bonus-won[data-rarity="epic"] .bonus-loot::after,.bonus-won[data-rarity="legendary"] .bonus-loot::after{content:'';position:absolute;left:50%;top:43%;width:5px;height:5px;background:var(--rarity);box-shadow:-70px -30px var(--rarity),66px -27px #fff0b8,-99px 12px #fff0b8,93px 20px var(--rarity),-42px 51px var(--rarity),48px 57px #fff0b8,1px -58px #fff0b8;pointer-events:none;animation:loot-sparks .85s ease-out both;filter:drop-shadow(0 0 4px var(--rarity))}
+.bonus-won[data-rarity="legendary"] .bonus-loot::after{animation-duration:1.15s;box-shadow:-70px -30px var(--rarity),66px -27px #fff0b8,-99px 12px #fff0b8,93px 20px var(--rarity),-42px 51px var(--rarity),48px 57px #fff0b8,1px -58px #fff0b8,-111px -58px var(--rarity),114px -65px #fff0b8,-83px 68px #fff0b8,79px 76px var(--rarity)}
+@keyframes loot-sparks{0%{transform:scale(.3);opacity:0}20%{opacity:1}100%{transform:scale(1.45) rotate(12deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.bonus-won[data-rarity] .bonus-loot::after{animation:none;display:none}}

@@ -201,3 +201,9 @@ body{overscroll-behavior:none}
 @media(max-width:360px){.effect-dock{gap:3px}.effect-dock .effect-card{padding-left:4px;padding-right:4px;gap:3px;min-width:43px}.effect-dock .effect-card strong{font-size:16px}.effect-dock .effect-icon{width:14px;height:14px;flex-basis:14px}}
 
 .hud.sky .effect-dock,.hud.sky .combo{display:none}.hud.sky .hud-score strong{color:#fff4ad}.hud.sky .hud-coins{color:#a5ffb6}
+
+/* Bonus companions share the compact instruments below the flight area. */
+.loot-effects{display:contents}
+.effect-dock .loot-chip{box-shadow:inset 0 -1px var(--effect-color)}
+.loot-chip-icon{font:900 16px/1 var(--arcade);color:var(--effect-color)}
+.hud.sky .loot-chip{display:none}

@@ -74,7 +74,7 @@ npm run preview
 
 `npm run dev` startet die ungebündelten Quellen. `npm run preview` liefert ausschließlich `dist/` unter `http://127.0.0.1:4173/jetlev-flyer/` aus. Für den Offline-Test immer den Production-Build verwenden.
 
-Der esbuild-Build bündelt und minimiert JavaScript/CSS, versieht die Dateinamen mit Inhalts-Hashes und bindet lokale WOFF2-Schriften ein. Die Offline-Dateiliste und Service-Worker-Version werden aus den Build-Inhalten erzeugt. Gleiche Quellen und Lockdatei erzeugen den gleichen Build. Limits: maximal 35 KB gzip für JavaScript und 1,5 MB für die komplette Offline-App. Der Build veröffentlicht keine Tests, Quellkarten oder Entwicklungsdateien.
+Der esbuild-Build bündelt und minimiert JavaScript/CSS, versieht die Dateinamen mit Inhalts-Hashes und bindet lokale WOFF2-Schriften ein. Die Offline-Dateiliste und Service-Worker-Version werden aus den Build-Inhalten erzeugt. Gleiche Quellen und Lockdatei erzeugen den gleichen Build. Limits: maximal 40 KB gzip für JavaScript und 1,5 MB für die komplette Offline-App. Der Build veröffentlicht keine Tests, Quellkarten oder Entwicklungsdateien.
 
 `.github/workflows/pages.yml` prüft Pull Requests und `main`: `npm ci`, Spiellogik, Production-Build, Chromium-PWA-/Offline-/Hochformat-Tests. Nur ein erfolgreicher Build auf `main` wird über GitHub Pages veröffentlicht. Das Deployment benötigt keine persönlichen Tokens: GitHub stellt die kurzlebigen Berechtigungen bereit. Bei Fehlern bleiben Test-Traces sieben Tage verfügbar. Dependabot erstellt wöchentlich Vorschläge für Dependency- und Action-Updates.
 
@@ -92,4 +92,26 @@ Streak-Stimmen: „Announcer Pack – El Dude“, VoiceBosch / SoundBiterSFX, [F
 
 1,25 Sekunden Halten lädt **Turbo Flow**: fünf Sekunden schneller steigen, sinken und abbremsen. Loslassen und neu laden; kein Stapeln. Haie und Lava-Piranhas kündigen Sprung und Augenschuss an. Der gemeinsame Bewegungsplaner prüft Körper, Laser, Meteore, Münzen und den aktuellen Boost-Zustand zusammen.
 
-Grüne Scheine öffnen ein kostenloses Rubbel-Los (Schild, Magnet, Turbo, Gold Run oder Münzen). Drei gleiche Felder gewinnen. Genau 1 % der Schein-Rolls starten stattdessen einen 15-Sekunden-Himmelsflug mit fünf Münzen pro gesammeltem Schein. Die normale Runde friert ein und wartet nach dem Bonus auf einen neuen Flugdruck. Gold-Run-Gewinne starten erst nach bestehenden Gefahren beziehungsweise dem Lava-Event.
+Grüne Scheine öffnen eine kostenlose Schatztruhe: federnde Öffnung, auslaufendes Belohnungsrad und Seltenheitsrahmen. Vor dem Öffnen kann stattdessen das Rubbel-Los gewählt werden; drei gleiche Felder gewinnen denselben bereits bestimmten Bonus. Genau 1 % der Schein-Rolls starten stattdessen einen 15-Sekunden-Himmelsflug mit fünf Münzen pro gesammeltem Schein. Die normale Runde friert ein und wartet nach dem Bonus auf einen neuen Flugdruck. Gold-Run-Gewinne starten erst nach bestehenden Gefahren beziehungsweise dem Lava-Event.
+
+
+### Neue Schätze
+
+Die klassischen WoW-Farben kennzeichnen Gewöhnlich (Weiß), Ungewöhnlich (Grün), Selten (Blau), Episch (Violett) und Legendär (Orange). Innerhalb der 99 % normalen Boni gelten 25 / 35 / 25 / 13 / 2 % je Seltenheit; Boni derselben Stufe sind gleich wahrscheinlich. Die Chancen stehen auch in der Truhe. Das Rad visualisiert den bereits gezogenen Gewinn; mehrfaches Tippen oder ein Wechsel zum Los würfelt ihn nicht neu.
+
+| Neuer Bonus | Seltenheit | Spielwirkung |
+|---|---|---|
+| Hai-Ferien | Selten | 8 s ohne Augenlaser; Fischkörper bleiben gefährlich. |
+| Mini-Flieger | Selten | 8 s kleinerer Pilot und kleinere Trefferfläche; kurze Schutzzeit beim Wachsen. |
+| Rettungsente | Episch | Innerhalb von 20 s einmal vor dem Versinken gerettet. |
+| Kokoskanone | Episch | 8 s lang alle 1,6 s ein Hindernis vor dir knacken. |
+| Midas-Welle | Legendär | Sichtbare Gefahren verschwinden und geben je 5 Münzen, mindestens 10. |
+| Münzenmonsun | Ungewöhnlich | 7 s häufigere Münzformationen mit unveränderter Erreichbarkeitsprüfung. |
+| Streak-Anker | Ungewöhnlich | Die Streak läuft 9 s nicht ab. |
+| Mutprobe | Selten | 8 s lang geben knappe Manöver 8 statt 2 Münzen. |
+| Piratenprämie | Ungewöhnlich | 8 s lang geben passierte Hindernisse jeweils 2 Münzen. |
+| Delfin-Post | Episch | 8 s lang sammelt der Delfin normale Münzen, die den Bildschirm verlassen. |
+
+Countdowns laufen ausschließlich während der normalen Runde. Truhe, Los, Himmel und Pause verbrauchen keine Laufzeit. `loot-effects.js` zeichnet die Begleiter und die kompakten Wasserlinien-Anzeigen; native CSS-/Canvas-Animationen benötigen keine zusätzliche Bibliothek. Der neue Umfang erhöht den gemessenen komprimierten JavaScript-Build auf rund 37 KB; das feste Budget beträgt 40 KB, die vollständige Offline-App bleibt unter 0,5 MB.
+
+Farbwerte: [WoW GetItemQualityColor](https://warcraft.wiki.gg/wiki/API_GetItemQualityColor).

@@ -9,7 +9,7 @@
     "build": "node scripts/build.mjs",
     "dev": "node scripts/serve.mjs .",
     "preview": "node scripts/serve.mjs dist",
-    "test": "node tests/bonus.test.cjs && node tests/heaven.test.cjs && node tests/boost.test.cjs && node tests/flight.test.cjs && node tests/aquatic.test.cjs && node tests/theme.test.cjs && node tests/level.test.cjs && node tests/progression.test.cjs && node tests/music.test.cjs && node tests/water.test.cjs && node tests/director.test.cjs && node tests/game.test.cjs",
+    "test": "node tests/bonus.test.cjs && node tests/loot-effects.test.cjs && node tests/heaven.test.cjs && node tests/boost.test.cjs && node tests/flight.test.cjs && node tests/aquatic.test.cjs && node tests/theme.test.cjs && node tests/level.test.cjs && node tests/progression.test.cjs && node tests/music.test.cjs && node tests/water.test.cjs && node tests/director.test.cjs && node tests/game.test.cjs",
     "test:e2e": "playwright test",
     "check": "npm test && npm run build && npm run test:e2e"
   },

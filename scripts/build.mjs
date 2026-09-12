@@ -31,7 +31,7 @@ for (const name of (await readdir('assets/fonts')).filter(n=>n.endsWith('.txt'))
 let html = await readFile('index.html','utf8');
 html = html.replace('href="style.css"',`href="${css}"`)
   .replace('id="start"','id="start" disabled')
-  .replace(/<script src="(?:flight|level|heaven|bonus|effects|music|water|director|progression|theme|career|game|pwa)\.js"><\/script>/g,'')
+  .replace(/<script src="(?:flight|level|heaven|bonus|loot-effects|effects|music|water|director|progression|theme|career|game|pwa)\.js"><\/script>/g,'')
   .replace('</body>',`<script src="${bundle}" defer></script></body>`);
 await writeFile(out+'/index.html',html);
 async function walk(dir) {
@@ -49,6 +49,7 @@ await writeFile(out+'/sw.js',sw);
 await writeFile(out+'/.nojekyll','');
 const jsBytes = gzipSync(await readFile(out+'/'+bundle)).length;
 const totalBytes = buffers.reduce((n,b)=>n+b.length,0)+Buffer.byteLength(sw);
-if(jsBytes>35000)throw new Error(`JS budget exceeded: ${jsBytes} gzip bytes (limit 35000)`);
+// Loot reel plus ten canvas companions: retain a strict 40 kB compressed JS budget.
+if(jsBytes>40000)throw new Error(`JS budget exceeded: ${jsBytes} gzip bytes (limit 40000)`);
 if(totalBytes>1500000)throw new Error(`Offline download budget exceeded: ${totalBytes} bytes`);
 console.log(`Build ${version}: JS ${(jsBytes/1024).toFixed(1)} KiB gzip, complete offline app ${(totalBytes/1024).toFixed(1)} KiB.`);

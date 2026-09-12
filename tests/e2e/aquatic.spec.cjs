@@ -2,20 +2,21 @@ const {test,expect}=require('@playwright/test');
 const fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../..');
 test('boost HUD and aquatic stages render together without runtime errors',async({page})=>{
+ test.setTimeout(45000);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const compiled=fs.readFileSync(path.join(root,'dist/index.html'),'utf8');
  const css=/href="(assets\/style-[^"]+)"/.exec(compiled)[1];
  const raw=fs.readFileSync(path.join(root,'index.html'),'utf8').replace('href="style.css"','href="'+css+'"');
- const scripts=['flight','level','heaven','bonus','effects','music','water','director','progression','theme','career','game'];
+ const scripts=['flight','level','heaven','bonus','loot-effects','effects','music','water','director','progression','theme','career','game'];
  for(const name of scripts){
   let source=fs.readFileSync(path.join(root,name+'.js'),'utf8');
-  if(name==='game')source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.scene=(lava=false)=>{
+  if(name==='game')source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.scene=(lava=false,bonus=null)=>{
    start();state='paused';startAge=10;toastLife=0;$('toast').hidden=true;$('boost-hint').hidden=true;
    p={x:W*.27,y:170,vy:-50,boost:4,charge:0,boostSpent:true};renderY=170;jetFeel=1;
    eruptionVisual=lava?1:0;shield=magnet=flow=gold=0;
    for(let i=0;i<100;i++)updateWater(1/120);
    obstacles=[{type:lava?'piranha':'shark',x:W*.73,y:150,stage:'fire',progress:.52,lava},{type:lava?'piranha':'shark',x:W*.72,y:312,stage:'splash',progress:.3,lava},{type:'laser',x:W*.5,y:148,active:true,small:lava},{type:'rocket',x:W*.75,y:80}];
-   updateHud();render();
+   if(bonus){const item=JetlevBonus.rewards.find(r=>r.kind===bonus);applyBonus(item.kind,item.amount);toastLife=0;effectCues=[];$('toast').hidden=true;}updateHud();render();
   };globalThis.bonusDemo=(sky=false)=>{start();p.y=145;obstacles=[];pickups=[];obstacleTimer=coinTimer=powerTimer=billTimer=fishTimer=100;const roll=JetlevBonus.roll;JetlevBonus.roll=()=>sky?{heaven:true}:{kind:'boost',amount:5};startBillEvent();JetlevBonus.roll=roll;};globalThis.bonusProbe=()=>({state,dist,boost:p.boost,coins,skyTime:heavenSession?.time,audioState:audio?.state,jetVolume:jetGain?.gain.value});globalThis.endSky=()=>{heavenSession.earned=35;heavenSession.time=.01;heavenSession.bills=[];heavenSession.spawnTimer=100;};resize();requestAnimationFrame(frame);`);
   await page.route('**/'+name+'.js',route=>route.fulfill({body:source,contentType:'text/javascript'}));
  }
@@ -24,8 +25,26 @@ test('boost HUD and aquatic stages render together without runtime errors',async
  await expect(page.locator('#boost-card')).toBeVisible();await expect(page.locator('#boost-time')).toContainText('4');
  await page.screenshot({path:'/tmp/jetlev-aquatic-water.png'});
  await page.evaluate(()=>scene(true));await page.screenshot({path:'/tmp/jetlev-aquatic-lava.png'});
+ for(const [kind,label]of [['dolphin','DELFIN-POST'],['lifebuoy','RETTUNGSENTE']]){
+  await page.evaluate(kind=>scene(false,kind),kind);
+  const chip=page.locator('#loot-effects .loot-chip');await expect(chip).toHaveCount(1);await expect(chip).toHaveAttribute('aria-label',new RegExp(label));
+  expect(await chip.evaluate(el=>el.style.getPropertyValue('--effect-color'))).toBe('#a335ee');
+  await page.screenshot({path:'/tmp/jetlev-loot-'+kind+'.png'});
+ }
  await page.evaluate(()=>bonusDemo(false));await expect(page.locator('.bonus-overlay')).toBeVisible();
  const frozen=await page.evaluate(()=>bonusProbe().dist);await page.waitForTimeout(150);expect(await page.evaluate(()=>bonusProbe().dist)).toBe(frozen);
+ await expect(page.locator('.bonus-open')).toBeVisible();
+ await page.screenshot({path:'/tmp/jetlev-loot-chest.png'});
+ await page.locator('.bonus-open').focus();await page.keyboard.press('Enter');
+ await expect(page.locator('.bonus-reel')).toBeVisible();
+ await page.screenshot({path:'/tmp/jetlev-loot-reel.png'});
+ await expect(page.locator('.bonus-continue')).toBeEnabled({timeout:7000});
+ expect(await page.evaluate(()=>bonusProbe().dist)).toBe(frozen);expect(await page.evaluate(()=>bonusProbe().boost)).toBe(5);
+ await expect(page.locator('.bonus-prize')).toContainText('TURBO');
+ await page.screenshot({path:'/tmp/jetlev-loot-reward.png'});
+ await page.keyboard.press('Enter');await expect(page.locator('.bonus-overlay')).toBeHidden();
+ expect(await page.evaluate(()=>bonusProbe().state)).toBe('return-ready');
+ await page.evaluate(()=>bonusDemo(false));await page.locator('.bonus-scratch').click();
  await page.screenshot({path:'/tmp/jetlev-scratch.png'});
  const first=page.locator('.bonus-tile').first(),box=await first.boundingBox();
  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));

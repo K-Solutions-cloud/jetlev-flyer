@@ -8,7 +8,7 @@ const sandbox={console,Math,Number,devicePixelRatio:1,localStorage:{getItem:()=>
 for(const path of ['flight.js','level.js','heaven.js','effects.js','music.js','water.js','director.js','progression.js','theme.js'])vm.runInNewContext(fs.readFileSync(path,'utf8'),sandbox);
 let source=fs.readFileSync('game.js','utf8');
 // Test instrumentation stays outside the shipped game.
-source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,t,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual,profile,runPerfects,runShieldSaves,missionSignals,eruption,eruptionWarning,eruptionPending,eruptionVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,makeMeteor,updateEruption,hit};resize();requestAnimationFrame(frame);`);
+source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({loot,state,t,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual,profile,runPerfects,runShieldSaves,missionSignals,eruption,eruptionWarning,eruptionPending,eruptionVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,makeMeteor,updateEruption,hit};resize();requestAnimationFrame(frame);`);
 sandbox.soundEvents=[];source=source.replace('function sfx(kind){','function sfx(kind){globalThis.soundEvents.push(kind);');
 sandbox.vibrations=[];sandbox.navigator={vibrate:pattern=>sandbox.vibrations.push(Array.from(pattern))};
 vm.runInNewContext(source,sandbox);const test=sandbox.test;
@@ -147,6 +147,25 @@ assert.equal(test.get().state,'return-ready');assert.equal(test.get().coins,35);
 elements.pause.onclick();elements.resume.onclick();assert.equal(elements['boost-hint'].hidden,false,'return instruction survives app pause');
 test.set('settleHeaven();press();');assert.equal(test.get().coins,35,'no duplicate sky payout');
 console.log('PASS: portal, isolated sky flight, pause/resume and once-only payout.');
+
+// Loot rewards keep normal flight unchanged and suspend with the run.
+reset();test.set("applyBonus('mini',8);state='scratch';");test.update(1);assert.equal(test.get().loot.mini,8);
+test.set("state='playing';obstacles=[{x:p.x+14,y:p.y,type:'gate',len:4}];");test.update(1/120);assert.equal(test.get().state,'playing','mini fits a gap that the normal body cannot');
+test.set('loot.mini=.001;');test.update(1/120);assert.ok(test.get().invulnerable>0,'growing has collision grace');
+reset();test.set("applyBonus('lifebuoy',20);p.y=278;p.vy=70;obstacles=[{x:p.x,y:230,type:'rocket'}];");test.update(1/120);assert.equal(test.get().state,'playing');assert.equal(test.get().loot.lifebuoy,0);assert.ok(test.get().p.y<240);assert.equal(test.get().obstacles.length,0);test.set('p.y=278;');test.update(1/120);assert.equal(test.get().state,'dying','buoy only saves once');
+reset();test.set("applyBonus('coconut',8);obstacles=[{x:p.x+40,y:100,type:'shark',family:'a',travel:0,warn:500,duration:100,height:150},{x:p.x+500,y:100,type:'laser',family:'a',travel:0,activation:500,expires:700}];");test.update(1/120);assert.equal(test.get().obstacles.length,0,'coconut clears paired future shot');
+reset();test.set("obstacles=[{x:p.x+40,y:80,type:'rocket'},{x:p.x+60,y:90,type:'gate',len:20}];applyBonus('treasurewave',0);");assert.equal(test.get().coins,10);assert.equal(test.get().obstacles.length,0);
+reset();test.set("applyBonus('coinrain',7);makeCoins();globalThis.rainInterval=coinTimer;");assert.ok(sandbox.rainInterval<=1.2);assert.ok(test.get().pickups.length>0,'rain uses safe formations');
+reset();test.set("applyBonus('comboanchor',9);combo=7;comboLife=.001;");test.update(1/120);test.set('globalThis.comboProbe=combo;');assert.equal(sandbox.comboProbe,7);
+reset();test.set("applyBonus('daredevil',8);obstacles=[{type:'rocket',x:p.x-27,y:p.y+28}];");test.update(1/120);assert.equal(test.get().coins,8);
+reset();test.set("applyBonus('bounty',8);obstacles=[{type:'rocket',x:p.x-27,y:60}];");test.update(1/120);test.update(1/120);assert.equal(test.get().coins,2,'bounty pays once');
+reset();test.set("applyBonus('dolphin',8);pickups=[{x:-11,y:70,phase:0,group:42}];formations.set(42,{left:1,failed:false});");test.update(1/120);assert.equal(test.get().coins,6,'dolphin completes missed row once');assert.equal(test.get().pickups.length,0);
+reset();test.set("applyBonus('ceasefire',8);obstacles=[{type:'laser',x:p.x,y:p.y,travel:5,activation:0,expires:100}];");test.update(1/120);assert.equal(test.get().state,'playing');assert.equal(test.get().obstacles.length,0);
+for(const kind of ['mini','lifebuoy','coconut','coinrain','comboanchor','daredevil','bounty','dolphin','ceasefire']){reset();test.set(`applyBonus('${kind}',.02);state='paused';`);test.update(.1);assert.equal(test.get().loot[kind],.02);test.set("state='playing';");test.update(.03);assert.equal(test.get().loot[kind],0);}
+reset();assert.deepEqual(Object.keys(test.get().loot),[],'new run clears loot');
+test.set("applyBonus('mini',8);state='portal';");test.update(.2);assert.equal(test.get().loot.mini,8,'portal freezes loot');test.set('showHome();');assert.deepEqual(Object.keys(test.get().loot),[],'home clears loot');
+reset();test.set("applyBonus('coconut',8);obstacles=[{type:'rocket',x:p.x+35,y:60},{type:'rocket',x:p.x+55,y:60}];");test.update(1/120);assert.equal(test.get().obstacles.length,1);test.update(1/120);assert.equal(test.get().obstacles.length,1,'coconut cadence prevents instant screen wipe');
+console.log('PASS: all ten loot mechanics, expiry, pause, mini grace and single-use rescue.');
 
 // Callouts are reserved for rare milestones; perfect rows and five-streaks stay instrumental.
 sandbox.voiceStarts=0;sandbox.voiceStops=0;
