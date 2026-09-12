@@ -30,7 +30,7 @@ for (const name of (await readdir('assets/fonts')).filter(n=>n.endsWith('.txt'))
 let html = await readFile('index.html','utf8');
 html = html.replace('href="style.css"',`href="${css}"`)
   .replace('id="start"','id="start" disabled')
-  .replace(/<script src="(?:level|effects|progression|theme|career|game|pwa)\.js"><\/script>/g,'')
+  .replace(/<script src="(?:level|effects|music|water|director|progression|theme|career|game|pwa)\.js"><\/script>/g,'')
   .replace('</body>',`<script src="${bundle}" defer></script></body>`);
 await writeFile(out+'/index.html',html);
 async function walk(dir) {

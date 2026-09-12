@@ -35,6 +35,26 @@ for (let scenario = 0; scenario < 90; scenario++) {
   assert.equal(collected, 6, 'each coin must be collectible in sequence');
 }
 assert.ok(accepted >= 40, 'generator must produce useful formations, not just reject everything');
+let meteorPaths=0;
+for(let scenario=0;scenario<30;scenario++){
+ const pilot={x:43,y:70+scenario%6*30,vy:0},rock={type:'meteor',x:270,y:-28,fall:.4+scenario%7*.12};
+ const coins=[{x:120,y:100+scenario%5*20},{x:137,y:100+scenario%5*20}];
+ const path=level.plan({pilot,distance:420,obstacles:[rock],coins,endScroll:rock.x-pilot.x+45});
+ if(!path)continue;
+ meteorPaths++;
+ const actual={...pilot};let scroll=0,meters=420,collected=0;
+ for(const point of path){
+  const delta=level.speedAt(meters)*level.STEP;scroll+=delta;meters+=delta*.16;
+  level.fly(actual,point.thrust);
+  const rx=rock.x-scroll,ry=rock.y+scroll*rock.fall;
+  assert.ok(Math.abs(rx-actual.x)>=18||Math.abs(ry-actual.y)>=28,'replayed path avoids actual falling rock');
+  while(collected<coins.length&&coins[collected].x-pilot.x<=scroll){assert.ok(Math.abs(actual.y-2-coins[collected].y)<=8);collected++;}
+ }
+ assert.equal(collected,coins.length);
+}
+assert.ok(meteorPaths>=10,'falling hazards must leave useful collectible paths');
+assert.equal(level.coinClear({x:200,y:150},{type:'meteor',x:200,y:-20,fall:1}),false,'reserve future downward sweep');
+assert.equal(level.coinClear({x:200,y:150},{type:'meteor',x:245,y:-20,fall:1}),true,'separate horizontal lanes stay clear');
 // Moving hazards: do not place coins inside any part of a drone's sweep.
 assert.equal(level.coinClear({x:200,y:174},{x:200,y:142,baseY:155,type:'drone'}),false);
 // A faster rocket behind a coin will eventually cross its horizontal position.

@@ -24,7 +24,8 @@
     {id:'classic',name:'JETLEV ORIGINAL',price:0,color:'#ef3340',trail:'#c9fbff'},
     {id:'coral',name:'KORALLENGLANZ',price:100,color:'#ff7772',trail:'#ffe0ba'},
     {id:'aqua',name:'LAGUNENLICHT',price:200,color:'#65e5d8',trail:'#adfff5'},
-    {id:'sunset',name:'ABENDGOLD',price:350,color:'#ffd078',trail:'#ffe9a9'}
+    {id:'sunset',name:'ABENDGOLD',price:350,color:'#ffd078',trail:'#ffe9a9'},
+    {id:'rainbow',name:'REGENBOGEN',price:500,color:'#d6a9ff',trail:'#c9fbff',rainbow:true}
   ];
   const integer = value => typeof value === 'number' && Number.isFinite(value) ? Math.max(0,Math.min(1e9,Math.floor(value))) : 0;
   const emptyStats = () => Object.fromEntries(metrics.map(metric=>[metric,0]));

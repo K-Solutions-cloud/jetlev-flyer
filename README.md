@@ -9,7 +9,7 @@ Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundef
 ## Spielen
 
 - PLAY / REPLAY startet einen Run.
-- Touch, Maus, Leertaste oder Pfeil hoch halten: steigen. Loslassen: sinken.
+- Touch, Maus, Leertaste oder Pfeil hoch halten: steigen. Loslassen: sinken. Wasserkontakt beendet den Run, auch mit Schild; es gibt keine automatische Schwebehilfe.
 - P / Escape oder Pause-Button: pausieren / fortsetzen.
 - Noten-Button: Ton an / aus. Audio beginnt nach einer Benutzerinteraktion.
 - Zehn Münzen aktivieren sechs Sekunden doppelten Münzwert (goldenes ×2). Magnetismus ist ausschließlich dem separaten Magnet-Power-up zugeordnet.
@@ -17,7 +17,7 @@ Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundef
 - Zentrale Effektkarten zeigen Restzeit und Ablauf. Jeder Effekt hat eigene Start-/Endklänge, Charakteranimationen und dezente Vibrationsmuster, sofern der Browser Vibration unterstützt. Reduzierte Bewegung deaktiviert Vibration.
 - Vollständige Münzreihen geben +5. Etwa alle 240 m folgt nach dem Passieren aktiver Gefahren ein sechssekündiger Gold Run mit mehr Münzreihen.
 - Raketen zeigen vor dem Eintritt ins Spielfeld eine Warnung und fliegen mit festgelegter Höhe nach links.
-- Kontinuierliche Fluggeschwindigkeit, schnelle Umkehr und weiche Grenzzonen; Schubsound und Wasserstrahlen folgen einer geglätteten Eingabe.
+- Kontinuierliche Fluggeschwindigkeit, schnelle Umkehr und eine weiche Obergrenze; der Wasserstrahl übernimmt Pilotenbewegung, fällt unter Schwerkraft und erzeugt Schaum sowie Wellen an der Oberfläche.
 - Der Tod zeigt einen kurzen Impact und eine 1,1-sekündige Pixel-Wasserexplosion mit synthetischem Bass-/Rausch-Sound.
 - Knappe Ausweichmanöver geben zwei Bonusmünzen. Der Distanzrekord wird lokal gespeichert.
 
@@ -25,9 +25,17 @@ Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundef
 
 Die Türkislagune, der Palmenhafen und die Vulkanbucht besitzen jeweils drei kumulative Missionen. Jeder beendete Run zählt für die gewählte Insel; drei abgeschlossene Missionen öffnen die nächste. Freigeschaltete Inseln bleiben frei wählbar. Der Hafen hat mehr maritime Kameradrohnen, die Vulkanbucht frühere und häufigere Renn-Wasserflugzeuge. Flugphysik, Kollisionsgrenzen und die Prüfung erreichbarer Münzreihen bleiben identisch.
 
-Beim Run-Ende wandern die gesammelten Münzen einmalig in die Garage. Vier Looks verändern Anzugdetails und Wasserlicht; das originale rot-schwarze Jetlev-Gerät mit Versorgungsschlauch und separatem Motorboot bleibt erkennbar. Die Vorschau nutzt denselben Pilotenrenderer wie das Spiel. Käufe und Auswahl werden lokal gespeichert. Es gibt keine Echtgeldkäufe, täglichen Pflichten oder käuflichen Physikvorteile.
+Beim Run-Ende wandern die gesammelten Münzen einmalig in die Garage. Fünf Looks verändern Anzugdetails und Wasserlicht, darunter ein Regenbogenstrahl mit fließenden Farbbändern; das originale rot-schwarze Jetlev-Gerät mit Versorgungsschlauch und separatem Motorboot bleibt erkennbar. Die Vorschau nutzt denselben Piloten- und Wasserstrahlrenderer wie das Spiel. Käufe und Auswahl werden lokal gespeichert. Es gibt keine Echtgeldkäufe, täglichen Pflichten oder käuflichen Physikvorteile.
 
 `progression.js` verwaltet Missionen, Besitz und Münzbank, `career.js` die Menüs und `theme.js` die drei Inselwelten. Fortschritt ist lokal auf diesen Browser beschränkt; Löschen der Websitedaten entfernt ihn. `tests/progression.test.cjs` prüft Freischaltungen, Abrechnung, Käufe und beschädigte Speicherdaten. Der Browsertest prüft Kauf, Ausrüstung, Inselwahl, Neuladen und Offline-Spiel.
+
+## Musik, Ausbrüche und adaptive Hindernisse
+
+`music.js` spielt vier eigens komponierte ruhige Chiptune-Stücke in gemischter Reihenfolge ohne direkte Wiederholung. Die Stücke dauern etwa 42–46 Sekunden und blenden sanft ein und aus. Musik pausiert mit dem Run und wird bei wichtigen Spielsignalen leiser; der Tonbutton schaltet auch die Musik aus. Alle Klänge werden lokal synthetisiert und funktionieren offline.
+
+Der erste Vulkanausbruch wird ab 420 m vorgemerkt, in der Vulkanbucht ab 180 m. Er wartet auf freie Gefahrenzonen und das Ende eines Gold Runs. Nach 2,4 Sekunden Vorwarnung folgen zwölf Sekunden Lava und angekündigte fallende Lavabrocken. Nach dem letzten Brocken gibt es 15 Bonusmünzen. Kulisse und Wasser blenden zurück; neue Standardhindernisse und Gold Runs warten auf den Übergang. Fallende Brocken werden mit derselben Bewegungsgleichung geplant und simuliert; ihre ganze Fallstrecke wird beim Münzschutz berücksichtigt.
+
+`director.js` merkt sich die Aufenthaltsdauer in sechs Höhenzonen. Mit Verweildauer und Run-Distanz wächst der Anteil gezielter Vorschläge, zu Beginn maximal 22 %, später maximal 75 %. Mindestens ein Viertel bleibt zufällige Erkundung. Die Erreichbarkeitsprüfung kann jeden Vorschlag verwerfen. Die tödliche Oberfläche ist Teil dieser Prüfung. `water.js` begrenzt Strahlpartikel und Oberflächenwellen; reduzierte Bewegung reduziert die dekorativen Effekte.
 
 ## Faire Münzformationen
 

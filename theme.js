@@ -10,6 +10,7 @@
  function rect(g,x,y,w,h,c){g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),Math.ceil(w),Math.ceil(h));}
  function poly(g,p,c){g.fillStyle=c;g.beginPath();for(let i=0;i<p.length;i++)i?g.lineTo(Math.round(p[i][0]),Math.round(p[i][1])):g.moveTo(Math.round(p[i][0]),Math.round(p[i][1]));g.closePath();g.fill();}
  const wrap=(x,span)=>((x%span)+span)%span;
+ function blend(a,b,q){return '#'+[1,3,5].map(i=>Math.round(parseInt(a.slice(i,i+2),16)*(1-q)+parseInt(b.slice(i,i+2),16)*q).toString(16).padStart(2,'0')).join('');}
  function palm(g,x,y,s,p){
   poly(g,[[x,y],[x+3*s,y],[x+7*s,y-29*s],[x+5*s,y-31*s]],p.leaf);
   const top=y-30*s;
@@ -17,24 +18,40 @@
   poly(g,[[x+6*s,top],[x+15*s,top-7*s],[x+29*s,top-2*s],[x+31*s,top+4*s],[x+17*s,top],[x+7*s,top+2*s]],p.leaf);
   poly(g,[[x+6*s,top],[x+3*s,top-13*s],[x+9*s,top-15*s],[x+13*s,top-5*s]],p.leaf);
  }
- function drawBackground(g,{W,H=320,t=0,world=0,island=0}){
+ function drawBackground(g,{W,H=320,t=0,world=0,island=0,eruption=0,reducedMotion=false}){
   const index=typeof island==='number'?island:({lagoon:0,harbor:1,sunset:2}[island]||0),p=palettes[wrap(index,3)];
   rect(g,0,0,W,H,p.sky);rect(g,0,75,W,67,p.haze);rect(g,0,142,W,82,p.cloud);
   const sx=W*.76;
   rect(g,sx-18,66,36,45,p.sun);rect(g,sx-23,72,46,33,p.sun);rect(g,sx-26,81,52,16,p.sun);
   for(let i=0;i<5;i++){const x=wrap(i*137-world*.035,W+160)-80,y=30+(i*29)%84;rect(g,x,y,36,3,p.cloud);rect(g,x+7,y-4,17,5,p.cloud);rect(g,x+26,y+3,22,2,p.cloud);}
+  const heat=eruption>.01?Math.max(0,Math.min(1,Number(eruption)||0)):0;
+  if(heat>0){
+   g.globalAlpha=heat*.62;rect(g,0,0,W,142,'#503e52');rect(g,0,142,W,82,'#af766d');g.globalAlpha=1;
+  }
   // Broad, quiet silhouettes leave the flight corridor readable.
   for(let layer=0;layer<2;layer++){
    const base=191+layer*14,step=8;g.fillStyle=layer?p.hill:p.far;g.beginPath();g.moveTo(0,225);
    for(let x=0;x<=W+step;x+=step){const z=x+world*(.065+layer*.035);g.lineTo(x,base-Math.round((Math.sin(z*.018+layer)*11+Math.sin(z*.037)*6)/3)*3);}
    g.lineTo(W,225);g.closePath();g.fill();
   }
-  if(index===2){
-   // A quiet extinct caldera gives Vulkanbucht a unique horizon, never a hazard.
+  if(index===2||heat>0){
+   // The distant caldera is scenic; only outlined foreground rocks can collide.
    const vx=W*.62+Math.sin(world*.001)*W*.08;
-   poly(g,[[vx-74,218],[vx-44,188],[vx-16,137],[vx-6,141],[vx+5,140],[vx+15,134],[vx+38,182],[vx+73,218]],p.far);
-   poly(g,[[vx-16,137],[vx-6,141],[vx+5,140],[vx+15,134],[vx+25,155],[vx+6,150],[vx-8,151]],p.hill);
-   poly(g,[[vx+5,151],[vx+38,182],[vx+73,218],[vx+21,218]],p.hill);
+   g.globalAlpha=index===2?1:heat;
+   poly(g,[[vx-74,218],[vx-44,188],[vx-16,137],[vx-6,141],[vx+5,140],[vx+15,134],[vx+38,182],[vx+73,218]],blend(p.far,'#6e545c',heat));
+   poly(g,[[vx-16,137],[vx-6,141],[vx+5,140],[vx+15,134],[vx+25,155],[vx+6,150],[vx-8,151]],blend(p.hill,'#4d4355',heat));
+   poly(g,[[vx+5,151],[vx+38,182],[vx+73,218],[vx+21,218]],blend(p.hill,'#4d4355',heat));
+   g.globalAlpha=1;
+   if(heat>0){
+    g.globalAlpha=heat*.8;
+    // Stacked ash cloud and continuous lava ribbons, with no screen flashes.
+    rect(g,vx-14,119,31,16,'#786273');rect(g,vx-22,107,43,16,'#786273');rect(g,vx-30,93,53,18,'#877080');rect(g,vx-22,84,39,13,'#877080');
+    poly(g,[[vx-13,138],[vx-4,142],[vx+6,140],[vx+13,135],[vx+9,145],[vx,150],[vx-9,145]],'#ffbd79');
+    poly(g,[[vx+3,147],[vx+8,161],[vx+5,170],[vx+15,188],[vx+18,207],[vx+14,207],[vx+10,190],[vx+1,171],[vx+4,160],[vx,149]],'#e99a6c');
+    rect(g,vx+4,154,2,8,'#ffd49b');rect(g,vx+8,180,2,7,'#ffd49b');
+    if(!reducedMotion){g.globalAlpha=heat*.27;for(let i=0;i<12;i++){const phase=wrap(t*.15+i/12,1),side=i%2?1:-1;rect(g,vx+side*(5+phase*22)+Math.sin(i*3)*5,132-Math.sin(phase*Math.PI)*43,1,1,'#ffdba0');}}
+    g.globalAlpha=1;
+   }
   }
   rect(g,0,218,W,102,p.sea);rect(g,0,249,W,71,p.deep);
   for(let i=0;i<3;i++){
@@ -55,12 +72,48 @@
   // Slow broken reflections; none resemble a pickup or collision object.
   for(let i=0;i<30;i++){const y=231+(i*19)%66,x=wrap(i*67-world*(.1+(y-218)*.004),W+50)-25;rect(g,x,y,5+(i*7)%20,1,i%4?p.sea:p.foam);}
   g.globalAlpha=.23;for(let i=0;i<8;i++)rect(g,sx-17+Math.sin(i*2+t*.6)*6,230+i*8,34-i*3,1,p.sun);g.globalAlpha=1;
-  // Foreground surface is continuous and explicitly safe, unlike striped hazards.
+  // The eruption turns the whole visible bay into a molten basin. These distant
+  // broad ribbons stay low contrast compared with the outlined airborne rocks.
+  if(heat>0){
+   g.globalAlpha=heat;
+   rect(g,0,233,W,H-233,'#b9574d');rect(g,0,254,W,H-254,'#943e44');
+   g.globalAlpha=heat*.8;rect(g,0,218,W,15,'#d37c5b');
+   g.globalAlpha=heat;
+   for(let i=0;i<22;i++){
+    const y=236+(i*17)%65,x=wrap(i*43-world*(.1+(y-218)*.002),W+45)-25;
+    rect(g,x,y,9+(i*7)%22,2,i%3?'#e98754':'#f8b36c');
+    rect(g,x+7,y+4,12+(i*5)%18,2,'#733b43');
+   }
+   g.globalAlpha=1;
+  }
+  // The continuous foreground marks the fatal surface below the flight corridor.
   for(let x=-8;x<W+8;x+=8){const y=303+Math.round(Math.sin((x+world)*.055+t*2)*1.5);rect(g,x,y,8,2,p.foam);rect(g,x,y+2,8,H-y,p.deep);rect(g,x+2,y+5,4,1,p.sea);}
+  if(heat>0){
+   // Molten foreground replaces the complete water surface with a smooth fade.
+   // Its top remains below the pilot's lowest permitted feet position.
+   g.globalAlpha=heat;
+   rect(g,0,303,W,H-303,'#bd4d43');rect(g,0,303,W,2,'#ffbb65');
+   rect(g,0,305,W,3,'#f0824d');rect(g,0,315,W,H-315,'#853b40');
+   for(let i=0;i<Math.ceil(W/18)+1;i++){
+    const x=wrap(i*23-world*.18,W+30)-15;
+    rect(g,x,309+(i%3)*3,13,2,'#f39955');rect(g,x+3,309+(i%3)*3,6,1,'#ffd185');
+    rect(g,x+9,306+(i%4)*3,8,2,'#713b40');rect(g,x+12,308+(i%4)*3,5,1,'#98453d');
+   }
+   g.globalAlpha=1;
+  }
  }
  function drawObstacle(g,o,{t=0}={}){
   const x=Math.round(o.x),y=Math.round(o.y);
-  if(o.type==='gate'){
+  if(o.type==='meteor'){
+   // Eight-pixel body matches the collider; the translucent diagonal wake is air.
+   g.globalAlpha=.23;
+   poly(g,[[x-3,y-4],[x+15,y-24],[x+12,y-8],[x+5,y+2]],'#ffc178');
+   g.globalAlpha=1;
+   poly(g,[[x-4,y-8],[x+3,y-8],[x+7,y-4],[x+8,y+3],[x+3,y+8],[x-4,y+7],[x-8,y+2],[x-8,y-3]],'#302d3d');
+   poly(g,[[x-3,y-6],[x+3,y-5],[x+5,y-2],[x+5,y+3],[x+1,y+6],[x-4,y+4],[x-6,y],[x-5,y-4]],'#835450');
+   rect(g,x-2,y-5,2,4,'#ffb570');rect(g,x-1,y-1,5,2,'#ef7652');rect(g,x+2,y+1,2,4,'#ffc281');
+   rect(g,x-5,y+1,3,2,'#ab6956');rect(g,x,y-3,3,2,'#4d3f46');
+  }else if(o.type==='gate'){
    const a=o.len/2,top=y-a;
    // Narrow tether with integral striped flotation pods: the entire length is solid.
    rect(g,x-3,top,6,o.len,ink);rect(g,x-1,top,2,o.len,'#dde5dc');

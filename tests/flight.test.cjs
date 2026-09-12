@@ -27,18 +27,14 @@ for (const step of [1 / 30, 1 / 60, 1 / 240]) {
   assert.ok(Math.abs(actual.vy - reference.vy) < .001, 'frame-independent speed');
 }
 
-// Long holds settle gently at the safe boundaries, with no bounce or drift.
-for (const thrust of [true, false]) {
-  const pilot = { y: 155, vy: 0 };
-  let previous = pilot.y;
-  for (let i = 0; i < 1200; i++) {
-    fly(pilot, thrust);
-    assert.ok(pilot.y >= 37 && pilot.y <= 271, 'pilot stays in bounds');
-    assert.ok(thrust ? pilot.y <= previous : pilot.y >= previous, 'no boundary bounce');
-    previous = pilot.y;
-  }
-  assert.ok(Math.abs(pilot.vy) < .01, 'soft landing');
-  fly(pilot, !thrust);
-  assert.ok(thrust ? pilot.vy > 0 : pilot.vy < 0, 'immediate escape from boundary');
-}
-console.log('PASS: continuous flight, responsive reversals, frame-rate consistency, soft boundaries.');
+// The upper boundary stays soft; the water never auto-supports the pilot.
+const ceiling={y:155,vy:0};
+for(let i=0;i<1200;i++){fly(ceiling,true);assert.ok(ceiling.y>=37);}
+assert.ok(Math.abs(ceiling.vy)<.01);fly(ceiling,false);assert.ok(ceiling.vy>0);
+const falling={y:155,vy:0};
+for(let i=0;i<240;i++)fly(falling,false);
+assert.ok(falling.y>globalThis.JetlevLevel.WATER_Y,'no passive hover over water');
+assert.equal(globalThis.JetlevLevel.safe(277,0,40,[]),false,'planner forbids water contact');
+const recovering={y:240,vy:88};for(let i=0;i<30;i++)fly(recovering,true);
+assert.ok(recovering.y<240&&recovering.vy<0,'timely thrust saves a descent smoothly');
+console.log('PASS: continuous flight, responsive reversals, frame-rate consistency, soft ceiling and fatal water boundary.');

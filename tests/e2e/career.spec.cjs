@@ -20,7 +20,7 @@ test('island choice and purchased Jetlev kit persist across reload and offline s
  await expect(page.locator('[data-island="sunset"]')).toBeDisabled();
  await page.locator('.career-close').tap();
  await page.reload();await expect(page.locator('#start')).toBeEnabled();
- await expect(page.locator('[data-career="islands"] small')).toHaveText('PALMENHAFEN');
+ await expect(page.locator('#home-island')).toContainText('PALMENHAFEN');
  await page.locator('[data-career="garage"]').tap();
  await expect(page.locator('[data-equip="coral"]')).toBeDisabled();
  expect(await page.locator('.career-dialog').evaluate(el=>el.scrollWidth<=el.clientWidth+1)).toBe(true);

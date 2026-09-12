@@ -1,0 +1,24 @@
+const assert=require('node:assert/strict');
+require('../water.js');
+const make=()=>globalThis.JetlevWater.create({random:()=>.5});
+const params={nozzles:[{x:30,y:100},{x:60,y:100}],thrust:1,velocityY:0,surface:303};
+const water=make();for(let i=0;i<12;i++)water.update(1/120,params);
+let before=water.getState();assert.ok(before.particles.length>0);assert.ok(before.jetSpeed>100&&before.jetSpeed<190,'jet speed eases toward thrust');
+water.update(.05,{...params,nozzles:[]});let after=water.getState();
+assert.ok(after.particles[0].vy>before.particles[0].vy,'gravity accelerates released water');
+assert.ok(after.particles[0].y>before.particles[0].y,'droplets move independently after release');
+const up=make(),down=make();for(let i=0;i<6;i++){up.update(1/120,{...params,velocityY:-80});down.update(1/120,{...params,velocityY:80});}
+assert.ok(down.getState().particles[0].vy-up.getState().particles[0].vy>100,'water inherits pilot momentum');
+for(let i=0;i<1200;i++)water.update(1/120,params);
+after=water.getState();assert.ok(after.impacts>0,'streams reach water from high nozzles');assert.ok(after.ripples.length>0);
+assert.ok(after.particles.length<=180&&after.ripples.length<=14,'particle and ripple count remain bounded');
+const reduced=make();for(let i=0;i<1200;i++)reduced.update(1/120,{...params,reducedMotion:true});
+assert.ok(reduced.getState().particles.length<=72);assert.ok(reduced.getState().emitted<after.emitted*.6);
+assert.ok(Math.abs(reduced.getState().jetSpeed-after.jetSpeed)<.001,'reduced motion preserves thrust physics');
+const rainbow=make();for(let i=0;i<120;i++)rainbow.update(1/120,{...params,rainbow:true});
+const rainbowBefore=rainbow.getState();assert.ok(new Set(rainbowBefore.particles.map(p=>p.color)).size>=3,'rainbow stripes emerge over time');
+rainbow.update(.01,{...params,nozzles:[],rainbow:false});assert.equal(rainbow.getState().particles[0].color,rainbowBefore.particles[0].color,'existing droplets never flash into a new palette');
+for(let i=0;i<400;i++)water.update(1/120,{nozzles:[]});assert.equal(water.getState().particles.length,0);assert.equal(water.getState().ripples.length,0,'old surface foam fades');
+let saves=0;water.draw({save(){saves++;},restore(){saves--;},fillRect(){}});assert.equal(saves,0,'renderer restores canvas state');
+water.reset();assert.equal(water.getState().impacts,0);assert.equal(water.getState().emitted,0);
+console.log('PASS: jet easing, inherited momentum, gravity, surface contact, bounded particles, reduced motion and persistent rainbow stripes.');

@@ -1,5 +1,8 @@
 import './level.js';
 import './effects.js';
+import './music.js';
+import './water.js';
+import './director.js';
 import './progression.js';
 import './theme.js';
 import './career.js';

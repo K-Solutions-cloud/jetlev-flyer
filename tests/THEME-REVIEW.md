@@ -27,3 +27,14 @@ Geprüfter Production-Build: `d5ef13dc34d25688`.
 - JavaScript: 18,4 KiB gzip; gesamte Offline-App: 361,2 KiB.
 
 Die Reviews belegen die genannten Prüfungen, keine allgemeingültige Geschmacksnote. Sound-/Haptiksteuerung wurde logisch geprüft; subjektives Klangempfinden und reale Gerätehaptik sind damit nicht gemessen. Browseremulation ersetzt keinen Hardwaretest auf iOS/Android. Fortschritt bleibt lokal im jeweiligen Browser.
+
+## Erweiterung: Musik, Lava, Wasserphysik und mobiles Hauptmenü
+
+Folgebuild `05e530afa711fa50`: vier originale Musikstücke, angekündigte Ausbrüche mit fallenden Lavabrocken, physikalische Wasserfäden und Regenbogen-Look, tödliche Oberfläche sowie adaptive Hindernisvorschläge. Hauptmenü mit fester Navigation für Spielen, Inseln und Garage neu gestaltet.
+
+- Sieben Logiktestsuiten erfolgreich, einschließlich zufälliger Musikreihenfolge, Pause/Mute, Schwerkraft/Strahlimpuls, Regenbogenstreifen, Aufenthaltszonen und sanftem Schwierigkeitsanstieg.
+- Meteorpfade unabhängig nachgespielt; Münzen bleiben einsammelbar, die Oberfläche ist bei der Suche ausgeschlossen.
+- Spieltest bestätigt Tod ohne Eingabe und Rettung durch rechtzeitigen Schub; Lavabonus erst nach dem letzten Brocken.
+- Fünf Production-Browsertests erneut erfolgreich. Im zusätzlichen Browsercheck läuft der Audiokontext mit fortschreitender Komposition; Pause stoppt die Musikzeit und schaltet den Musikbus stumm.
+- Neues Hauptmenü, Inselnavigation, Regenbogenvorschau und Lavaansicht visuell geprüft. Vulkanfarbe, Ausblendung und Sichtbarkeit des Regenbogenstrahls nachgebessert.
+- Unabhängiger Mechanikreview ohne neue Spawn-/Kollisionsblocker. Gezielte Vorschläge bleiben der Erreichbarkeitsprüfung untergeordnet.
