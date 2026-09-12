@@ -1,0 +1,18 @@
+{
+  "id": "./",
+  "name": "JETLEV-FLYER — Water Rush",
+  "short_name": "Jetlev",
+  "description": "Jetlev-Flyer Pixel Arcade: fliegen, Münzen sammeln und den nächsten Rekord knacken.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#202020",
+  "theme_color": "#202020",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {"src":"assets/icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"assets/icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}
