@@ -73,10 +73,11 @@
 
   // Beam search over actual hold/release inputs. Every accepted path has a
   // replayable input witness; failure only omits a spawn, never weakens safety.
-  function plan({ pilot, distance, obstacles, coins, endScroll }) {
+  function plan({ pilot, distance, obstacles, coins, endScroll, reactionTime = 0, held = false }) {
     const targets = coins.filter(c => c.x > pilot.x + 3).sort((a, b) => a.x - b.x);
-    const end = Math.max(endScroll || 0, ...targets.map(c => c.x - pilot.x + 28), 30);
+    const end = Math.max(endScroll || 0, ...targets.map(c => c.x - pilot.x + 28), ...obstacles.map(o => (o.x - pilot.x + bounds(o).x + 16) / (o.type === 'rocket' ? 1.45 : 1)), 30);
     const frames = forecast(distance, end);
+    if (!frames.length || frames[frames.length - 1] < end) return null;
     let beam = [{ y: pilot.y, vy: pilot.vy, next: 0, parent: null, path: [] }];
     const branchSteps = 18; // At most one input change per 150 ms.
     for (let offset = 0; offset < frames.length; offset += branchSteps) {
@@ -86,7 +87,8 @@
           parent: previous, path: [], thrust };
         let valid = true;
         for (let j = offset; j < Math.min(offset + branchSteps, frames.length); j++) {
-          fly(node, thrust);
+          const input = j * STEP < reactionTime ? held : thrust;
+          fly(node, input);
           const scroll = frames[j];
           if (!safe(node.y, scroll, pilot.x, obstacles)) { valid = false; break; }
           while (node.next < targets.length && targets[node.next].x - pilot.x <= scroll) {
@@ -94,7 +96,7 @@
             node.next++;
           }
           if (!valid) break;
-          node.path.push({ x: pilot.x + scroll, y: node.y, thrust });
+          node.path.push({ x: pilot.x + scroll, y: node.y, thrust: input });
         }
         if (!valid) continue;
         const next = targets[node.next];
@@ -130,5 +132,38 @@
     return null;
   }
 
-  globalThis.JetlevLevel = Object.freeze({ STEP, WATER_Y, speedAt, fly, bounds, safe, coinClear, plan, formation });
+  // Groups are proposed together and accepted atomically, with one replayable route.
+  function encounter({pilot,distance,width,obstacles=[],coins=[],reservations=[],held=false,
+    center=155,type='gate',random=Math.random}) {
+    const progress=Math.max(0,Math.min(1,(distance-220)/1580));
+    const multi=random()<progress*.72;
+    const count=multi?(distance>650&&random()<progress*.45?3:2):1;
+    const speed=speedAt(distance),spacing=speed*(1.35-.25*progress);
+    const mode=multi?Math.floor(random()*3):-1;
+    const group=[];
+    const make=(kind,y,delay=0)=>{
+      const factor=kind==='rocket'?1.45:1;
+      const lead=Math.max((width+20-pilot.x)/speed,kind==='rocket'?1.85:1.4);
+      return {type:kind,x:pilot.x+speed*factor*(lead+delay),y,baseY:y,
+        len:43+random()*20,phase:random()*6,passed:false};
+    };
+    if(mode===0){ // A legible rising/falling slalom, never an instant reversal.
+      const direction=center<155?1:-1;
+      for(let i=0;i<count;i++)group.push(make('gate',Math.max(75,Math.min(230,center+direction*i*62)),i*spacing/speed));
+    }else if(mode===1){ // Twin torpedoes leave a broad corridor between their lanes.
+      const middle=Math.max(135,Math.min(175,center));
+      group.push(make('rocket',middle-78),make('rocket',middle+78));
+      if(count===3)group.push(make('rocket',middle,1.65));
+    }else if(mode===2){ // Barrier then torpedo: enough time to change altitude.
+      group.push(make('gate',Math.max(80,Math.min(225,center))));
+      for(let i=1;i<count;i++)group.push(make('rocket',center<155?215:85,i*1.4));
+    }else group.push(make(type,Math.max(70,Math.min(235,center))));
+    if(group.some(o=>!coins.every(c=>coinClear(c,o))||!reservations.every(p=>safe(p.y,p.x-pilot.x,pilot.x,[o]))))return null;
+    const path=plan({pilot,distance,obstacles:[...obstacles,...group],coins,reactionTime:.35,held});
+    if(!path)return null;
+    const arrivals=group.map(o=>(o.x-pilot.x)/(speed*(o.type==='rocket'?1.45:1)));
+    return {obstacles:group,path,mode,progress,span:Math.max(...arrivals)-Math.min(...arrivals)};
+  }
+
+  globalThis.JetlevLevel = Object.freeze({ STEP, WATER_Y, speedAt, fly, bounds, safe, coinClear, plan, formation, encounter });
 })();

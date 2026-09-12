@@ -265,20 +265,18 @@ function updateHud(){
  $('combo').innerHTML=comboLife>0&&combo>=3?'<img class="coin-icon" src="assets/icons/coin.svg" alt="" width="22" height="22"> '+combo+' STREAK':'';
 }
 function makePattern(){
-  // Existing formations keep their reserved safe flight corridor.
+  // Keep whole groups readable, and never stack an unvalidated partial pattern.
+  if(obstacles.filter(o=>o.x>p.x-40).length>4){obstacleTimer=.5;return;}
   for(let attempt=0;attempt<6;attempt++){
-    const center=director.pick(dist,p.y).center,len=rand(43,70);
+    const center=director.pick(dist,p.y).center;
     let type=Math.random()<(runIsland==='harbor'?.6:.8)?'gate':'drone';
     if(dist>(runIsland==='sunset'?260:350)&&Math.random()<(runIsland==='sunset'?.22:.16))type='rocket';
-    const y=Math.min(266-len/2,center);
-    const candidate={x:type==='rocket'?Math.max(W+speed*1.45*.85,p.x+speed*1.45*1.65):W+20,y,baseY:y,len,type,passed:false,phase:rand(0,6)};
-    if(!pickups.every(c=>level.coinClear(c,candidate)))continue;
-    if(!reservations.every(point=>level.safe(point.y,point.x-p.x,p.x,[candidate])))continue;
-    const path=level.plan({pilot:p,distance:dist,obstacles:[...obstacles,candidate],coins:pickups,
-      endScroll:(candidate.x-p.x)/(type==='rocket'?1.45:1)+40});
-    if(!path)continue;
-    obstacles.push(candidate);if(type==='rocket'){note(620,.09,'square',.022);note(620,.09,'square',.022,.22);}
-    obstacleTimer=rand(1.75,2.25)+Math.max(0,1-dist/200)*.5-Math.min(.35,dist/1800);
+    const pattern=level.encounter({pilot:p,distance:dist,width:W,obstacles,coins:pickups,reservations,held,center,type});
+    if(!pattern)continue;
+    obstacles.push(...pattern.obstacles);
+    if(pattern.obstacles.some(o=>o.type==='rocket')){note(620,.09,'square',.022);note(620,.09,'square',.022,.22);}
+    // Recovery space follows a group; later runs shorten it gently, with a floor.
+    obstacleTimer=pattern.span+rand(1.75,2.25)+Math.max(0,1-dist/200)*.5-pattern.progress*.35;
     return;
   }
   obstacleTimer=.6;

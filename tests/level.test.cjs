@@ -64,3 +64,39 @@ assert.equal(level.coinClear({x:200,y:60},{x:250,y:200,type:'rocket'}),true);
 assert.equal(level.plan({pilot:{x:40,y:150,vy:0},distance:0,
  obstacles:[{x:100,y:155,len:320,type:'gate'}],coins:[{x:150,y:150}]}),null);
 console.log(`PASS: ${accepted}/90 generated formations, every accepted flight replayed; drone sweep, rocket crossings, impossible wall. ${Math.round(performance.now()-started)} ms`);
+
+// Replay complete encounters against independent live collision calculations.
+let groups=0,triples=0;const modes=new Set();
+for(let scenario=0;scenario<150;scenario++){
+ const width=[120,160,260,480][scenario%4],distance=[0,250,700,1800,5000][scenario%5];
+ const pilot={x:width*.27,y:65+random()*175,vy:-70+random()*130},held=random()<.5;
+ const existing=scenario%3===0?[{type:'rocket',x:width+110,y:70}]:[];
+ const result=level.encounter({pilot,distance,width,held,center:80+random()*150,type:'gate',obstacles:existing,random});
+ if(!result)continue;
+ if(distance===0)assert.equal(result.obstacles.length,1,'gentle opening');
+ if(result.obstacles.length>1){groups++;modes.add(result.mode);}
+ if(result.obstacles.length===3)triples++;
+ const actual={...pilot};let scroll=0,meters=distance,frame=0;
+ for(const point of result.path){
+  if(frame*level.STEP<.35)assert.equal(point.thrust,held,'reaction window preserves current input');
+  frame++;level.fly(actual,point.thrust);
+  const delta=level.speedAt(meters)*level.STEP;scroll+=delta;meters+=delta*.16;
+  assert.ok(actual.y<level.WATER_Y-5,'route stays above water');
+  for(const o of [...existing,...result.obstacles]){
+   const x=o.x-scroll*(o.type==='rocket'?1.45:1);
+   const rx=o.type==='gate'?5:12,ry=o.type==='gate'?o.len/2+3:6;
+   assert.ok(Math.abs(x-pilot.x)>=rx+15||Math.abs(o.y-actual.y)>=ry+25,'route clears actual hitboxes with margin');
+  }
+ }
+ for(const o of [...existing,...result.obstacles])assert.ok(o.x-scroll*(o.type==='rocket'?1.45:1)<pilot.x-15,'witness covers the last hazard');
+}
+assert.ok(groups>=15,'multiple-hazard patterns must actually be accepted');
+assert.ok(triples>=3,'late runs include triples');assert.equal(modes.size,3,'all pattern families appear');
+assert.equal(level.encounter({pilot:{x:40,y:150,vy:0},distance:2000,width:160,
+ obstacles:[{type:'gate',x:100,y:155,len:320}],random}),null,'impossible existing wall rejects the whole encounter');
+// The planner must inspect hazards beyond the final coin, not stop at the reward.
+assert.equal(level.plan({pilot:{x:40,y:150,vy:0},distance:0,coins:[{x:90,y:150}],
+ obstacles:[{type:'gate',x:350,y:155,len:320}]}),null);
+console.log(`PASS: ${groups} multi-hazard encounters, ${triples} triples, all families replayed with reaction time and complete hazard horizon.`);
+
+assert.equal(level.plan({pilot:{x:40,y:150,vy:0},distance:0,coins:[],obstacles:[{type:'gate',x:9000,y:155,len:320}]}),null,'never accept a truncated planning horizon');
