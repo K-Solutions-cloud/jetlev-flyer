@@ -34,7 +34,7 @@ Logikprüfungen: `node tests/flight.test.cjs`, `node tests/level.test.cjs` und `
 - Rückenplatte, seitliche Düsen und Steuerhebel: https://jetlev-flyer.com/gallery/
 - Original-Logo: https://jetlev-flyer.com/wp-content/uploads/logo_2371x293.jpg
 
-Das Original-Logo liegt unverändert in `assets/jetlev-flyer-logo.jpg`. Spielgrafiken werden im Canvas gezeichnet. Google Fonts sind optional; ohne Verbindung greifen Systemschriften.
+Das Original-Logo liegt unverändert in `assets/jetlev-flyer-logo.jpg`. Spielgrafiken werden im Canvas gezeichnet. Die Schriftarten liegen lokal als WOFF2 vor; der Production-Build benötigt keine externen Requests.
 
 ## Mobile / Hochformat
 
