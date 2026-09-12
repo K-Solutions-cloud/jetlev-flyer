@@ -120,3 +120,18 @@ reset();test.set('shield=9;');tick(220);assert.equal(test.get().state,'over','no
 reset();test.set('p.y=240;p.vy=88;held=true;');for(let i=0;i<40;i++)test.update(1/120);assert.equal(test.get().state,'playing','timely thrust recovers above water');
 assert.ok(test.get().p.y<240);
 console.log('PASS: flight, effects, career, eruption/meteors, fatal water contact and active recovery.');
+
+// Spoken reward follows the visible toast, and cannot survive mute/pause or overlap.
+sandbox.voiceStarts=0;sandbox.voiceStops=0;
+test.set(`sound=true;state='playing';perfectBuffer={duration:.8};
+ audio={destination:{},createBufferSource:()=>({connect(){},start(){globalThis.voiceStarts++;},stop(){globalThis.voiceStops++;}}),createGain:()=>({gain:{},connect(){}})};
+ toastLife=0;showToast('PERFEKT +5',1.05,3);`);
+assert.equal(sandbox.voiceStarts,1);
+test.set("showToast('PERFEKT +5',1.05,3);");
+assert.equal(sandbox.voiceStarts,1,'queued rewards must not speak early');
+test.set("toastLife=0;showToast('PERFEKT +5',1.05,3);");
+assert.equal(sandbox.voiceStarts,2);assert.equal(sandbox.voiceStops,1,'new voice replaces the previous voice');
+test.set('pause();');assert.equal(sandbox.voiceStops,2,'pause stops speech');
+test.set("sound=false;state='playing';toastLife=0;showToast('PERFEKT +5',1.05,3);");
+assert.equal(sandbox.voiceStarts,2,'mute suppresses speech');
+console.log('PASS: Perfect voice follows toast visibility, replaces overlap, and respects pause/mute.');

@@ -47,11 +47,31 @@ function resize(){
  previousY=renderY=p.y;
 }
 new ResizeObserver(resize).observe(canvas);
-function initAudio(){if(!sound)return;try{if(!audio){audio=new(window.AudioContext||window.webkitAudioContext)();const b=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate);const data=b.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;jetNode=audio.createBufferSource();jetNode.buffer=b;jetNode.loop=true;jetFilter=audio.createBiquadFilter();jetFilter.type='lowpass';jetFilter.frequency.value=600;jetGain=audio.createGain();jetGain.gain.value=0;jetNode.connect(jetFilter);jetFilter.connect(jetGain);jetGain.connect(audio.destination);musicBus=audio.createGain();musicBus.gain.value=0;musicBus.connect(audio.destination);jetNode.start();}audio.resume().catch(()=>{});}catch{sound=false;}}
+// Local recording: decoded once, shared mute controls, no overlapping voices.
+let perfectBuffer=null,perfectLoading=null,perfectSource=null,perfectToken=0;
+function loadPerfect(){
+ if(perfectBuffer)return Promise.resolve(perfectBuffer);
+ if(!perfectLoading&&audio&&typeof fetch==='function')perfectLoading=fetch('assets/audio/perfect.mp3')
+  .then(r=>{if(!r.ok)throw Error('Voice unavailable');return r.arrayBuffer();})
+  .then(bytes=>audio.decodeAudioData(bytes)).then(buffer=>perfectBuffer=buffer)
+  .catch(()=>{perfectLoading=null;return null;});
+ return perfectLoading||Promise.resolve(null);
+}
+function stopPerfect(){perfectToken++;if(perfectSource){perfectSource.stop();perfectSource=null;}}
+async function speakPerfect(){
+ stopPerfect();if(!sound||!audio||state!=='playing')return;
+ const token=perfectToken,buffer=perfectBuffer||await loadPerfect();
+ if(!buffer||token!==perfectToken||!sound||state!=='playing'||$('toast').textContent!=='PERFEKT +5'||toastLife<=0)return;
+ const source=audio.createBufferSource(),gain=audio.createGain();source.buffer=buffer;
+ gain.gain.value=.8;source.connect(gain);gain.connect(audio.destination);
+ source.onended=()=>{source.disconnect();gain.disconnect();if(perfectSource===source)perfectSource=null;};
+ perfectSource=source;rewardDuck=Math.max(rewardDuck,buffer.duration);source.start();
+}
+function initAudio(){if(!sound)return;try{if(!audio){audio=new(window.AudioContext||window.webkitAudioContext)();const b=audio.createBuffer(1,audio.sampleRate*2,audio.sampleRate);const data=b.getChannelData(0);for(let i=0;i<data.length;i++)data[i]=Math.random()*2-1;jetNode=audio.createBufferSource();jetNode.buffer=b;jetNode.loop=true;jetFilter=audio.createBiquadFilter();jetFilter.type='lowpass';jetFilter.frequency.value=600;jetGain=audio.createGain();jetGain.gain.value=0;jetNode.connect(jetFilter);jetFilter.connect(jetGain);jetGain.connect(audio.destination);musicBus=audio.createGain();musicBus.gain.value=0;musicBus.connect(audio.destination);jetNode.start();loadPerfect();}audio.resume().catch(()=>{});}catch{sound=false;}}
 function note(f,d=.1,type='square',vol=.035,delay=0,end=f,bus){if(!sound||!audio)return;const at=audio.currentTime+delay,o=audio.createOscillator(),gain=audio.createGain();o.type=type;o.frequency.setValueAtTime(f,at);o.frequency.exponentialRampToValueAtTime(Math.max(20,end),at+d);gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(vol,at+.005);gain.gain.exponentialRampToValueAtTime(.0001,at+d);o.connect(gain);gain.connect(bus||audio.destination);o.start(at);o.stop(at+d+.01);}
 function sfx(kind){if(kind==='streak'){[784,1046,1174,1568,2093].forEach((f,i)=>note(f,i===4?.25:.12,'triangle',.075,i*.055));note(196,.3,'sine',.065,0,98);note(1568,.24,'sine',.022,.25);rewardDuck=.5;}if(kind==='coin'){const f=[784,880,1046,1174,1318][(Math.max(1,combo)-1)%5];note(f,.065,'square',.025);note(f*1.5,.09,'square',.022,.045);}if(kind==='start')[523,659,784,1046].forEach((f,i)=>note(f,.12,'square',.028,i*.07));if(kind==='hit'){note(160,.35,'sawtooth',.055,0,35);note(75,.4,'triangle',.13);}if(kind==='combo')[784,1046,1318].forEach((f,i)=>note(f,.1,'square',.025,i*.065));if(kind==='button')note(440,.07,'square',.02,0,660);}
 function musicNote(f,d,type,vol,delay=0){note(f,d,type,vol,delay,f,musicBus);}
-function muteJet(){if(jetGain&&audio)jetGain.gain.setTargetAtTime(0,audio.currentTime,.02);if(musicBus&&audio)musicBus.gain.setTargetAtTime(0,audio.currentTime,.015);}
+function muteJet(){stopPerfect();if(jetGain&&audio)jetGain.gain.setTargetAtTime(0,audio.currentTime,.02);if(musicBus&&audio)musicBus.gain.setTargetAtTime(0,audio.currentTime,.015);}
 function pop(id){if(reducedMotion)return;const el=$(id);el.classList.remove('pop');void el.offsetWidth;el.classList.add('pop');}
 function showToast(text,life=1.2,rank=1){
  if(toastLife>.15&&toastRank>1&&state==='playing'){
@@ -61,6 +81,7 @@ function showToast(text,life=1.2,rank=1){
  const el=$('toast');el.textContent=text;el.hidden=false;
  el.setAttribute('data-reward',rank);el.style.setProperty('--toast-life',life+'s');
  pop('toast');toastLife=life;toastRank=rank;
+ if(text==='PERFEKT +5')speakPerfect();
 }
 function showHome(){water.reset();eruption=eruptionWarning=eruptionVisual=0;eruptionPending=eruptionFinishing=false;$('eruption-status').hidden=true;career?.refresh();effectCues=[];toastQueue=[];toastRank=toastLife=0;deathEffect=null;rewardRings=[];shield=magnet=invulnerable=gold=0;state='home';clearInput();muteJet();reservations=[];obstacles=[];pickups=[];particles=[];texts=[];for(const id of ['hud','result','pause-screen','boost-hint','toast','event-badge'])$(id).hidden=true;$('intro').hidden=false;}
 function start(){director.reset();water.reset();$('eruption-status').hidden=true;career?.close();runId=globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);runIsland=profile.selectedIsland;runPerfects=runShieldSaves=0;runCommitted=false;missionSignals=new Set();effectMemory={shield:false,magnet:false,flow:false,gold:false};effectExit={shield:0,magnet:0,flow:0,gold:0};effectCues=[];toastQueue=[];toastRank=toastLife=rewardDuck=magnetVisual=0;initAudio();sfx('start');state='playing';clearInput();dist=coins=combo=comboLife=world=startAge=charge=flow=0;flowMax=6;milestone=100;soundtrack.reset();eruption=eruptionWarning=eruptionVisual=meteorTimer=0;eruptionPending=eruptionFinishing=false;nextEruption=runIsland==='sunset'?180:420;speed=100;shield=magnet=invulnerable=gold=0;goldPending=false;nextGold=220;powerTimer=10;powerIndex=0;formationId=0;formations.clear();deathEffect=null;rewardRings=[];jetFeel=0;impactHold=0;renderY=previousY=155;obstacleTimer=2.8;coinTimer=.4;reservations=[];obstacles=[];pickups=[];particles=[];texts=[];p={x:W*.27,y:155,vy:0};shake=flash=0;for(const id of ['intro','result','pause-screen'])$(id).hidden=true;$('hud').hidden=false;$('pause').hidden=false;$('boost-hint').hidden=false;showToast('GO!',.8);updateHud();canvas.focus({preventScroll:true});}

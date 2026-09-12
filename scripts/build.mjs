@@ -21,6 +21,7 @@ const result = await build({
 const outputs = Object.entries(result.metafile.outputs);
 const bundle = outputs.find(([,meta])=>meta.entryPoint==='main.js')[0].slice(out.length+1);
 const css = outputs.find(([,meta])=>meta.entryPoint==='style.css')[0].slice(out.length+1);
+await cp('assets/audio',out+'/assets/audio',{recursive:true});
 await cp('assets/icons',out+'/assets/icons',{recursive:true});
 await cp('assets/jetlev-flyer-logo.jpg',out+'/assets/jetlev-flyer-logo.jpg');
 await cp('manifest.webmanifest',out+'/manifest.webmanifest');
