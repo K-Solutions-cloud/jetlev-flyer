@@ -29,6 +29,7 @@ for (const name of (await readdir('assets/fonts')).filter(n=>n.endsWith('.txt'))
 }
 let html = await readFile('index.html','utf8');
 html = html.replace('href="style.css"',`href="${css}"`)
+  .replace('id="start"','id="start" disabled')
   .replace(/<script src="(?:level|effects|game|pwa)\.js"><\/script>/g,'')
   .replace('</body>',`<script src="${bundle}" defer></script></body>`);
 await writeFile(out+'/index.html',html);
@@ -42,6 +43,7 @@ const template = await readFile('sw.js','utf8');
 const version = createHash('sha256').update(template).update(Buffer.concat(buffers)).digest('hex').slice(0,16);
 const sw = template.replace("const VERSION = 'development';",`const VERSION = '${version}';`)
   .replace(/const FILES = .*?;/,`const FILES = ${JSON.stringify(['./',...files.map(f=>f.slice(out.length+1))])};`);
+await writeFile(out+'/index.html',html.replace('</head>',`<meta name="app-version" content="${version}"></head>`));
 await writeFile(out+'/sw.js',sw);
 await writeFile(out+'/.nojekyll','');
 const jsBytes = gzipSync(await readFile(out+'/'+bundle)).length;

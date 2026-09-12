@@ -1,4 +1,8 @@
 import './level.js';
 import './effects.js';
-import './game.js';
-import './pwa.js';
+import { preparePwa } from './pwa.js';
+preparePwa().then(async reloading=>{
+ if(reloading)return;
+ await import('./game.js');
+ document.getElementById('start').disabled=false;
+});

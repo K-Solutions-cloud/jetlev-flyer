@@ -6,14 +6,19 @@
  <header class="app-header"><a href="./" class="logo" aria-label="Jetlev-Flyer"><img src="assets/jetlev-flyer-logo.jpg" alt="JETLEV-FLYER"></a><div class="header-right"><button id="sound" class="square" aria-label="Ton ausschalten">♫</button></div></header>
  <section class="cabinet" id="cabinet" aria-label="Jetlev-Flyer Water Rush">
   <canvas id="game" tabindex="0" aria-label="Halte die Spielfläche oder Leertaste zum Steigen, loslassen zum Sinken."></canvas>
-  <div class="vignette"></div>
-  <div class="hud" id="hud" hidden><div class="hud-score"><strong id="distance">0000<small>m</small></strong></div><div class="hud-coins" id="coin-counter"><span class="pixel-coin">✦</span><strong id="coins">0</strong></div><button id="pause" class="square" aria-label="Pausieren">Ⅱ</button><div class="combo" id="combo"></div><div class="power-status" id="power-status" aria-label="Aktive Power-ups"></div><div class="flow-meter" id="flow-meter"><span id="flow-label">FLOW 0/10</span><div><i id="flow-fill"></i></div></div></div>
+  <div class="vignette"></div><div class="boot-status" id="boot-status" role="status" hidden></div>
+  <div class="hud" id="hud" hidden><div class="hud-score"><strong id="distance">0000<small>m</small></strong></div><div class="hud-coins" id="coin-counter"><img class="pixel-coin" src="assets/icons/coin.svg" alt="Münzen" width="32" height="32"><strong id="coins">0</strong></div><button id="pause" class="square" aria-label="Pausieren">Ⅱ</button><div class="combo" id="combo"></div><div class="effect-dock" aria-label="Aktive Effekte">
+    <div class="effect-card shield-card" id="shield-card" hidden><span class="effect-name">◇ SCHILD</span><strong id="shield-time">9<small>s</small></strong><div class="effect-track"><i id="shield-fill"></i></div></div>
+    <div class="effect-card magnet-card" id="magnet-card" hidden><span class="effect-name">∩ MAGNET</span><strong id="magnet-time">8<small>s</small></strong><div class="effect-track"><i id="magnet-fill"></i></div></div>
+    <div class="flow-meter" id="flow-meter"><span id="flow-label">FLOW 0/10</span><div><i id="flow-fill"></i></div></div>
+    <div class="effect-card gold-card" id="event-badge" hidden><span class="effect-name">★ GOLD RUN</span><strong id="gold-time">6<small>s</small></strong><div class="effect-track"><i id="gold-fill"></i></div></div>
+  </div></div>
   <div class="screen home" id="intro"><div class="title"><span>JETLEV</span><strong>FLYER</strong><div class="title-sticker">WATER RUSH</div></div><div class="home-bottom"><div class="record">♛ BEST <b id="best">0 m</b></div><button class="play-button" id="start"><span>▶</span> PLAY</button><p class="hint">HALTEN ↑ <i>·</i> LOSLASSEN ↓</p></div></div>
-  <div class="screen glass" id="result" hidden><div class="result-panel"><div class="zone-tag" id="result-tag">GAME OVER</div><h1><span>SPLASH!</span></h1><div class="score-card"><strong id="final-distance">0<small>m</small></strong><div><span>✦ <b id="final-coins">0</b></span><span>♛ <b id="final-best">0 m</b></span></div></div><button class="play-button" id="restart">↻ &nbsp; REPLAY</button><button class="text-button" id="home">MENÜ</button></div></div>
+  <div class="screen glass" id="result" hidden><div class="result-panel"><div class="zone-tag" id="result-tag">GAME OVER</div><h1><span>SPLASH!</span></h1><div class="score-card"><strong id="final-distance">0<small>m</small></strong><div><span><img class="coin-icon" src="assets/icons/coin.svg" alt="Münzen" width="26" height="26"> <b id="final-coins">0</b></span><span>♛ <b id="final-best">0 m</b></span></div></div><button class="play-button" id="restart">↻ &nbsp; REPLAY</button><button class="text-button" id="home">MENÜ</button></div></div>
   <div class="screen glass" id="pause-screen" hidden><div class="result-panel"><h1><span>PAUSE</span></h1><button class="play-button" id="resume">▶ &nbsp; WEITER</button><button class="text-button" id="quit">BEENDEN</button></div></div>
-  <div class="event-badge" id="event-badge" hidden></div><div class="toast" id="toast" hidden>READY?</div>
+  <div class="toast" id="toast" hidden>READY?</div>
   <div class="boost-hint" id="boost-hint" hidden>HALTEN ↑</div>
  </section>
 
 </main><script src="level.js"></script><script src="effects.js"></script><script src="game.js"></script>
-<script src="pwa.js"></script></body></html>
+</body></html>

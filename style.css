@@ -108,3 +108,33 @@ body{overscroll-behavior:none}
 .toast[data-reward="3"]::before{inset:-22px 6%;border-top:3px dotted #d3fff1}
 .cabinet:has(#pause-screen:not([hidden])) .toast,.cabinet:has(#pause-screen:not([hidden])) .toast::before{animation-play-state:paused}
 @media(prefers-reduced-motion:reduce){.toast.pop{will-change:auto}.toast::before{display:none}}
+
+/* Central effect dashboard. Timers and remaining time share one visual language. */
+.effect-dock{position:absolute;top:80px;left:0;right:0;display:flex;justify-content:center;align-items:center;gap:8px;pointer-events:none;text-shadow:none}
+.effect-card,.effect-dock .flow-meter{--effect-color:#fff;flex:0 1 118px;min-width:0;position:relative;inset:auto;transform:none;text-align:center;background:#15262fe6;border:1px solid #ffffff45;border-top:3px solid var(--effect-color);border-radius:6px;box-shadow:0 4px 0 #14222b45;padding:7px 8px 9px;color:#fff}
+.effect-name,.effect-dock #flow-label{display:block;white-space:nowrap;font:800 16px/1.15 var(--arcade);letter-spacing:.7px;color:var(--effect-color)}
+.effect-card strong,.effect-dock #flow-label strong{display:block;font:900 38px/1.08 var(--arcade);color:#fff;margin:2px 0 5px;font-variant-numeric:tabular-nums}
+.effect-card small,.effect-dock #flow-label small{font-size:20px;margin-left:2px;color:#d8e6e8}
+.effect-track,.effect-dock .flow-meter>div{height:6px;margin-top:3px;border:0;background:#ffffff20;overflow:hidden;border-radius:2px}
+.effect-track i,.effect-dock #flow-fill{display:block;height:100%;background:var(--effect-color);transition:width .12s linear}
+.effect-dock .shield-card{--effect-color:#a8eee1}.effect-dock .magnet-card{--effect-color:#88edff}.effect-dock .gold-card{--effect-color:#ffe36a}.effect-dock .flow-meter{--effect-color:#ff8e94}
+.effect-dock .flow-meter:not(.active){flex-basis:126px;padding:8px 10px;align-self:center;border-top-width:1px;opacity:.85}
+.effect-dock #flow-label b{color:#fff;font-size:21px;margin-left:5px}
+.effect-card.ending,.effect-dock .flow-meter.ending{border-color:#ffb476;background:#3a2a29ed}
+.effect-card.pop,.effect-dock .flow-meter.pop{animation:effect-in .24s cubic-bezier(.2,.8,.3,1.2)}
+@keyframes effect-in{from{opacity:0;transform:translateY(-7px) scale(.92)}to{opacity:1;transform:none}}
+.hud .combo{top:184px;left:0;right:0;text-align:center;font-size:22px;text-shadow:2px 2px #202020}
+.toast{top:34%}
+@media(max-width:600px){.effect-dock{top:72px;gap:6px}.effect-card,.effect-dock .flow-meter{padding:6px 5px 7px}.effect-name,.effect-dock #flow-label{font-size:15px;letter-spacing:.2px}.effect-card strong,.effect-dock #flow-label strong{font-size:34px}.hud .combo{top:167px}}
+@media(max-width:360px){.effect-dock{gap:4px;top:67px}.effect-name,.effect-dock #flow-label{font-size:13px}.effect-card strong,.effect-dock #flow-label strong{font-size:30px}.effect-dock .flow-meter:not(.active){padding:7px 4px}.effect-dock #flow-label b{font-size:17px;margin-left:2px}.hud .combo{top:153px}}
+@media(max-height:570px){.effect-dock{top:60px}.effect-card strong,.effect-dock #flow-label strong{display:inline;font-size:26px;margin:0 3px}.effect-name,.effect-dock #flow-label{font-size:13px}.effect-card small,.effect-dock #flow-label small{font-size:15px}.hud .combo{top:132px;font-size:18px}.toast{top:43%;font-size:37px}}
+@media(orientation:landscape) and (max-height:600px){.effect-dock{top:0;left:29%;right:70px;gap:6px}.effect-card,.effect-dock .flow-meter{padding:4px}.effect-card strong,.effect-dock #flow-label strong{font-size:24px}.hud .combo{top:70px}.toast{top:38%}}
+
+.pixel-coin,.coin-icon{display:inline-block;object-fit:contain;image-rendering:pixelated;vertical-align:middle;flex-shrink:0}.pixel-coin{width:32px;height:32px}.coin-icon{width:26px;height:26px}.combo .coin-icon{width:22px;height:22px}
+
+.effect-dock .flow-meter{--effect-color:#ffe36a}.effect-dock .flow-meter:not(.active){flex-basis:165px}.effect-dock .flow-meter:not(.active) #flow-label{font-size:16px;letter-spacing:0}.effect-dock .flow-meter:not(.active) .coin-icon{width:20px;height:20px}.effect-dock #flow-label b{margin-left:0}
+@media(max-width:360px){.effect-dock .flow-meter:not(.active) #flow-label{font-size:13px}.effect-dock .flow-meter:not(.active) .coin-icon{width:16px;height:16px}}
+
+.boot-status{position:absolute;z-index:10;bottom:0;left:0;right:0;text-align:center;padding:10px 8px max(10px,env(safe-area-inset-bottom));background:#202020ed;color:#fff;font:700 14px var(--arcade);letter-spacing:1px;pointer-events:none}
+
+.effect-card.expired,.effect-dock .flow-meter.expired{opacity:.5;filter:saturate(.25);transition:opacity .4s,filter .4s}.effect-card.expired strong,.effect-dock .flow-meter.expired strong{min-height:37px;display:grid;place-items:center}.effect-card.expired strong small,.effect-dock .flow-meter.expired strong small{font-size:18px;letter-spacing:1px}

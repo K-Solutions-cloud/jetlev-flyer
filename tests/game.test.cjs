@@ -10,6 +10,7 @@ let source=fs.readFileSync('game.js','utf8');
 // Test instrumentation stays outside the shipped game.
 source=source.replace('resize();requestAnimationFrame(frame);',`globalThis.test={get:()=>({state,p,dist,coins,flow,charge,shield,magnet,invulnerable,gold,goldPending,obstacles,pickups,deathEffect,formations,jetFeel,held,toastRank,toastQueue,rewardRings,magnetVisual}),set:(fn)=>eval(fn),update,collectPower,makePattern,hit};resize();requestAnimationFrame(frame);`);
 sandbox.soundEvents=[];source=source.replace('function sfx(kind){','function sfx(kind){globalThis.soundEvents.push(kind);');
+sandbox.vibrations=[];sandbox.navigator={vibrate:pattern=>sandbox.vibrations.push(Array.from(pattern))};
 vm.runInNewContext(source,sandbox);const test=sandbox.test;
 let now=0;const tick=n=>{for(let i=0;i<n;i++)frame(now+=1000/60)};
 const reset=()=>{elements.start.onclick();test.set('obstacleTimer=100;coinTimer=100;powerTimer=100;');};
@@ -45,4 +46,23 @@ assert.equal(sandbox.soundEvents.filter(e=>e==='streak').length,1,'dedicated fif
 assert.equal(test.get().toastRank,2);assert.ok(test.get().rewardRings.some(r=>r.strength>1));
 pickup('magnet');assert.ok(test.get().toastQueue.some(e=>e.text==='MAGNET!'&&e.rank===3),'important rewards are queued');
 tick(15);assert.ok(test.get().magnetVisual>.5,'magnet aura eases in');test.set('magnet=0;');tick(45);assert.ok(test.get().magnetVisual<.01,'magnet aura eases out');
-console.log('PASS: touch flight, shield hit/grace, magnet, FLOW cap, paused timers, perfect/missed lines, safe Gold Run, explosion, restart, rocket lead-in/direction.');
+
+reset();test.set('flow=6;pickups=[{x:p.x+45,y:p.y-2,phase:0}];');const passiveX=test.get().pickups[0].x;test.update(1/120);
+assert.ok(Math.abs(passiveX-test.get().pickups[0].x-100/120)<.01,'coin multiplier does not secretly activate magnetism');
+pickup('shield');test.update(.06);assert.equal(elements['shield-card'].hidden,false);assert.match(elements['shield-time'].innerHTML,/9<small>s/);
+const starts=[],ends=[];
+for(const kind of ['shield','magnet','flow','gold']){
+ reset();sandbox.vibrations.length=0;
+ test.set(`${kind}=1;`);test.update(1/120);
+ assert.equal(sandbox.vibrations.length,1,'one activation cue');starts.push(JSON.stringify(sandbox.vibrations[0]));
+ test.update(1/120);assert.equal(sandbox.vibrations.length,1,'no repeated activation each frame');
+ test.set(`${kind}=0;`);test.update(.06);
+ assert.equal(sandbox.vibrations.length,2,'one expiration cue');ends.push(JSON.stringify(sandbox.vibrations[1]));
+ const timer=kind==='flow'?'flow-label':kind+'-time';
+ assert.match(elements[timer].innerHTML,/ENDE/,'expiration remains readable');
+ test.update(.7);assert.equal(sandbox.vibrations.length,2,'expiration is not repeated');
+ if(kind!=='flow')assert.equal(elements[kind==='gold'?'event-badge':kind+'-card'].hidden,true);
+}
+assert.equal(new Set(starts).size,4,'distinct activation vibrations');
+assert.equal(new Set(ends).size,4,'distinct expiration vibrations');
+console.log('PASS: flight, powerups, rewards, effect lifecycle, distinct haptics, pause, death and input.');

@@ -1,4 +1,17 @@
 const {test,expect}=require('@playwright/test');
+test('stale document switches to the active release before PLAY is enabled',async({page})=>{
+ let staleSent=false;
+ await page.route('**/jetlev-flyer/',async route=>{
+  const response=await route.fetch();
+  staleSent=true;
+  await route.fulfill({response,body:(await response.text()).replace(/name="app-version" content="[^"]+"/,'name="app-version" content="old-release"')});
+ });
+ await page.goto('./');
+ await expect(page.locator('#start')).toBeEnabled();
+ expect(staleSent).toBe(true);
+ expect(await page.locator('meta[name="app-version"]').getAttribute('content')).not.toBe('old-release');
+ await page.locator('#start').tap();await expect(page.locator('#hud')).toBeVisible();
+});
 test('installable, self-contained and playable offline under repository path',async({page,context})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  const external=[];page.on('request',r=>{if(!r.url().startsWith('http://127.0.0.1:4173/'))external.push(r.url());});

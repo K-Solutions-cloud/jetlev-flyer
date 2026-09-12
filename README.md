@@ -12,8 +12,9 @@ Mobile-Arcade-Spiel mit Pixelgrafik, Jetlev-Flyer-Branding und Web-Audio-Soundef
 - Touch, Maus, Leertaste oder Pfeil hoch halten: steigen. Loslassen: sinken.
 - P / Escape oder Pause-Button: pausieren / fortsetzen.
 - Noten-Button: Ton an / aus. Audio beginnt nach einer Benutzerinteraktion.
-- Zehn Münzen aktivieren sechs Sekunden Münzmagnet und doppelte Münzen.
+- Zehn Münzen aktivieren sechs Sekunden doppelten Münzwert (goldenes ×2). Magnetismus ist ausschließlich dem separaten Magnet-Power-up zugeordnet.
 - Power-ups rotieren: Wasserschild (9 s / ein Treffer), Magnet (8 s / größere Reichweite), FLOW-Pickup (6 s, bis 9 s verlängerbar).
+- Zentrale Effektkarten zeigen Restzeit und Ablauf. Jeder Effekt hat eigene Start-/Endklänge, Charakteranimationen und dezente Vibrationsmuster, sofern der Browser Vibration unterstützt. Reduzierte Bewegung deaktiviert Vibration.
 - Vollständige Münzreihen geben +5. Etwa alle 240 m folgt nach dem Passieren aktiver Gefahren ein sechssekündiger Gold Run mit mehr Münzreihen.
 - Raketen zeigen vor dem Eintritt ins Spielfeld eine Warnung und fliegen mit festgelegter Höhe nach links.
 - Kontinuierliche Fluggeschwindigkeit, schnelle Umkehr und weiche Grenzzonen; Schubsound und Wasserstrahlen folgen einer geglätteten Eingabe.
@@ -65,6 +66,6 @@ In GitHub unter **Settings → Pages → Source: GitHub Actions** aktivieren. Na
 
 ### Installation und Offline-Updates
 
-Android: im Browser die Installation anbieten lassen bzw. „App installieren“. iPhone: Safari → Teilen → Zum Home-Bildschirm. Einmal online vollständig öffnen, danach kann das Spiel offline gestartet werden. Ein App-Update wird geladen, während die alte Version konsistent weiterläuft; die neue Version übernimmt, nachdem alle alten Spiel-Tabs/Instanzen geschlossen wurden. Persönliche Rekorde im Local Storage werden beim Cache-Update nicht gelöscht.
+Android: im Browser die Installation anbieten lassen bzw. „App installieren“. iPhone: Safari → Teilen → Zum Home-Bildschirm. Einmal online vollständig öffnen, danach kann das Spiel offline gestartet werden. Jeder neue Aufruf prüft vor dem Spielstart auf Updates ohne HTTP-Cache für den Worker. Ein vollständig geladenes Update wird sofort aktiviert; bei abweichender Dokumentversion wird die passende Startseite automatisch geladen. Navigation lädt bevorzugt online. Bei Offlinebetrieb oder fehlgeschlagenem Update bleibt die gespeicherte Version spielbar; ohne erreichbaren Server ist der neueste Stand nicht garantierbar. Laufende Runs werden nicht automatisch neu geladen. Persönliche Rekorde im Local Storage werden beim Cache-Update nicht gelöscht.
 
 Das Manifest und sämtliche URLs unterstützen den Repository-Unterpfad `/jetlev-flyer/`. Die PWA ist für Hochformat und Standalone-Anzeige konfiguriert. Schriftlizenzen liegen unter `assets/fonts/*-OFL.txt`.
