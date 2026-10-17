@@ -14,7 +14,7 @@
     "check": "npm test && npm run build && npm run test:e2e"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "esbuild": "0.28.2"
   }
 }
